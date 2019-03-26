@@ -126,6 +126,10 @@ func (i Item) Keys() content.Keys {
 	return i.contentKeys
 }
 
+func (i Item) Target() *url.URL {
+	return i.targetURL
+}
+
 // GetDropmarkCollection takes a Dropmark apiEndpoint and creates a Collection object
 func GetDropmarkCollection(apiEndpoint string, userAgent string, timeout time.Duration) (*Collection, error) {
 	result := new(Collection)
