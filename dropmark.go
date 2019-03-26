@@ -84,6 +84,13 @@ func (i *Item) init() {
 	i.createdOn, _ = time.Parse("2006-01-02 15:04:05 MST", i.CreatedAt)
 	i.featuredImageURL, _ = url.Parse(i.Thumbnails.Large)
 	i.contentKeys = content.CreateKeys(i, content.KeyDoesNotExist)
+
+	_, contentURLErr := url.Parse(i.Content)
+	if contentURLErr == nil {
+		// Sometimes in Dropmark, the content is just a URL (not sure why).
+		// If the content is just a single URL, replace it with the Description
+		i.Content = i.Description
+	}
 }
 
 func (i Item) Title() content.Title {
