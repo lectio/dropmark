@@ -24,6 +24,11 @@ type Collection struct {
 	APIEndpoint string  `json:"-"`
 }
 
+// Source returns the Dropmark API endpoint which created the collection
+func (c Collection) Source() string {
+	return c.APIEndpoint
+}
+
 // Content returns Dropmark items as a content collection
 func (c Collection) Content() []content.Content {
 	result := make([]content.Content, len(c.Items))
