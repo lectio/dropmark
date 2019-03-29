@@ -13,6 +13,7 @@ import (
 	"github.com/lectio/content"
 	"github.com/lectio/harvester"
 	"github.com/opentracing/opentracing-go"
+	"gopkg.in/cheggaaa/pb.v1"
 	"gopkg.in/jdkato/prose.v2"
 )
 
@@ -245,18 +246,28 @@ func GetDropmarkCollection(ch *harvester.ContentHarvester, parentSpan opentracin
 	if getErr != nil {
 		return nil, fmt.Errorf("Unable to execute GET request %q: %v", apiEndpoint, getErr)
 	}
-	body, readErr := ioutil.ReadAll(res.Body)
+
+	bar := pb.New(int(res.ContentLength)).SetUnits(pb.U_BYTES)
+	bar.Start()
+	reader := bar.NewProxyReader(res.Body)
+	body, readErr := ioutil.ReadAll(reader)
+	bar.FinishPrint(fmt.Sprintf("Completed API request %q", apiEndpoint))
+
 	if readErr != nil {
 		return nil, fmt.Errorf("Unable to read body from request %q: %v", apiEndpoint, readErr)
 	}
 
 	json.Unmarshal(body, result)
 
+	bar = pb.StartNew(len(result.Items))
+	bar.ShowCounters = true
 	if result.Items != nil {
 		for i := 0; i < len(result.Items); i++ {
 			result.Items[i].init(ch, parentSpan)
+			bar.Increment()
 		}
 	}
+	bar.FinishPrint(fmt.Sprintf("Completed parsing items from %q", apiEndpoint))
 
 	return result, nil
 }
