@@ -131,7 +131,15 @@ type Item struct {
 
 func (i *Item) init(ch *harvester.ContentHarvester, parentSpan opentracing.Span) {
 	resources := ch.HarvestResources(i.Link, parentSpan).Resources
-	i.resource = resources[0]
+	if resources != nil && len(resources) == 1 {
+		i.resource = resources[0]
+	} else {
+		if resources == nil {
+			fmt.Printf("Unable to harvest resource: %q, resources came back nil\n", i.Link)
+		} else {
+			fmt.Printf("Unable to harvest resource: %q, resources len is %d\n", i.Link, len(resources))
+		}
+	}
 	i.title = Title(i.Name)
 	i.summary = Summary{item: i, original: i.Description}
 	i.categories = make([]string, len(i.Tags))
@@ -182,6 +190,12 @@ func (i Item) Keys() content.Keys {
 
 // OpenGraphContent uses the HarvestedResource's open graph content if available
 func (i Item) OpenGraphContent(ogKey string, defaultValue *string) (string, bool) {
+	if i.resource == nil {
+		if defaultValue == nil {
+			return "", false
+		}
+		return *defaultValue, true
+	}
 	rc := i.resource.ResourceContent()
 	if rc == nil {
 		if defaultValue == nil {
@@ -194,6 +208,12 @@ func (i Item) OpenGraphContent(ogKey string, defaultValue *string) (string, bool
 
 // TwitterContent uses the content's TwitterCard meta data
 func (i Item) TwitterCardContent(twitterKey string, defaultValue *string) (string, bool) {
+	if i.resource == nil {
+		if defaultValue == nil {
+			return "", false
+		}
+		return *defaultValue, true
+	}
 	rc := i.resource.ResourceContent()
 	if rc == nil {
 		if defaultValue == nil {
