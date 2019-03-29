@@ -2,14 +2,63 @@ package dropmark
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"regexp"
 	"time"
 
 	"github.com/lectio/content"
+	"github.com/lectio/harvester"
+	"github.com/opentracing/opentracing-go"
+	"gopkg.in/jdkato/prose.v2"
 )
+
+type Title string
+
+// Original is the title's original text
+func (t Title) Original() string {
+	return string(t)
+}
+
+var sourceNameAsSuffixRegEx = regexp.MustCompile(` \| .*$`) // Removes " | Healthcare IT News" from a title like "xyz title | Healthcare IT News"
+
+// Clean is the title's "cleaned up text" (which removes "| ..."" suffixes)
+func (t Title) Clean() string {
+	return sourceNameAsSuffixRegEx.ReplaceAllString(string(t), "")
+}
+
+type Summary struct {
+	item     *Item
+	original string
+}
+
+// Original is the summary's original text (from Dropmark description)
+func (s Summary) Original() string {
+	return s.original
+}
+
+// FirstSentenceOfBody uses NLP to get the first sentence of the body
+func (s Summary) FirstSentenceOfBody() (string, error) {
+	content, proseErr := prose.NewDocument(s.item.Body())
+	if proseErr != nil {
+		return "", proseErr
+	}
+
+	sentences := content.Sentences()
+	if len(sentences) > 0 {
+		return sentences[0].Text, nil
+	} else {
+		return "", errors.New("Unable to find any sentences in the body")
+	}
+}
+
+// OpenGraphDescription uses the HarvestedResource's open graph content if available
+func (s Summary) OpenGraphDescription() (string, bool) {
+	return s.item.OpenGraphContent("description", nil)
+}
 
 // HTTPUserAgent may be passed into GetDropmarkCollection as the default HTTP User-Agent header parameter
 const HTTPUserAgent = "github.com/lectio/dropmark"
@@ -70,16 +119,21 @@ type Item struct {
 	UserEmail     string      `json:"user_email,omitempty"`
 	UserAvatarURL *Thumbnails `json:"user_avatar,omitempty"`
 
-	title            content.Title
+	title            Title
+	summary          Summary
 	targetURL        *url.URL
 	categories       []string
 	createdOn        time.Time
 	featuredImageURL *url.URL
 	contentKeys      content.Keys
+	resource         *harvester.HarvestedResource
 }
 
-func (i *Item) init() {
-	i.title = content.Title(i.Name)
+func (i *Item) init(ch *harvester.ContentHarvester, parentSpan opentracing.Span) {
+	resources := ch.HarvestResources(i.Link, parentSpan).Resources
+	i.resource = resources[0]
+	i.title = Title(i.Name)
+	i.summary = Summary{item: i, original: i.Description}
 	i.categories = make([]string, len(i.Tags))
 	for t := 0; t < len(i.Tags); t++ {
 		i.categories[t] = i.Tags[t].Name
@@ -106,8 +160,8 @@ func (i Item) Body() string {
 	return i.Content
 }
 
-func (i Item) Summary() string {
-	return i.Description
+func (i Item) Summary() content.Summary {
+	return i.summary
 }
 
 func (i Item) Categories() []string {
@@ -126,12 +180,36 @@ func (i Item) Keys() content.Keys {
 	return i.contentKeys
 }
 
+// OpenGraphContent uses the HarvestedResource's open graph content if available
+func (i Item) OpenGraphContent(ogKey string, defaultValue *string) (string, bool) {
+	rc := i.resource.ResourceContent()
+	if rc == nil {
+		if defaultValue == nil {
+			return "", false
+		}
+		return *defaultValue, true
+	}
+	return rc.GetOpenGraphMetaTag(ogKey)
+}
+
+// TwitterContent uses the content's TwitterCard meta data
+func (i Item) TwitterCardContent(twitterKey string, defaultValue *string) (string, bool) {
+	rc := i.resource.ResourceContent()
+	if rc == nil {
+		if defaultValue == nil {
+			return "", false
+		}
+		return *defaultValue, true
+	}
+	return rc.GetTwitterMetaTag(twitterKey)
+}
+
 func (i Item) Target() *url.URL {
 	return i.targetURL
 }
 
 // GetDropmarkCollection takes a Dropmark apiEndpoint and creates a Collection object
-func GetDropmarkCollection(apiEndpoint string, userAgent string, timeout time.Duration) (*Collection, error) {
+func GetDropmarkCollection(ch *harvester.ContentHarvester, parentSpan opentracing.Span, apiEndpoint string, userAgent string, timeout time.Duration) (*Collection, error) {
 	result := new(Collection)
 	result.APIEndpoint = apiEndpoint
 
@@ -156,7 +234,7 @@ func GetDropmarkCollection(apiEndpoint string, userAgent string, timeout time.Du
 
 	if result.Items != nil {
 		for i := 0; i < len(result.Items); i++ {
-			result.Items[i].init()
+			result.Items[i].init(ch, parentSpan)
 		}
 	}
 
