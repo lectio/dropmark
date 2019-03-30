@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/hashicorp/go-multierror"
 	"github.com/lectio/content"
 	"github.com/lectio/harvester"
 	"github.com/opentracing/opentracing-go"
@@ -69,14 +70,34 @@ const HTTPTimeout = time.Second * 90
 
 // Collection is the object returned from the Dropmark API calls after JSON unmarshalling is completed
 type Collection struct {
-	Name        string  `json:"name,omitempty"`
-	Items       []*Item `json:"items,omitempty"`
-	APIEndpoint string  `json:"-"`
+	Name        string            `json:"name,omitempty"`
+	Items       []*Item           `json:"items,omitempty"`
+	apiEndpoint string            `json:"-"`
+	errors      *multierror.Error `json:"-"`
+}
+
+func (c *Collection) init(ch *harvester.ContentHarvester, parentSpan opentracing.Span, verbose bool) {
+	var bar *pb.ProgressBar
+	if verbose {
+		bar = pb.StartNew(len(c.Items))
+		bar.ShowCounters = true
+	}
+	if c.Items != nil {
+		for i := 0; i < len(c.Items); i++ {
+			c.Items[i].init(c, i, ch, parentSpan)
+			if verbose {
+				bar.Increment()
+			}
+		}
+	}
+	if verbose {
+		bar.FinishPrint(fmt.Sprintf("Completed parsing items from %q", c.apiEndpoint))
+	}
 }
 
 // Source returns the Dropmark API endpoint which created the collection
 func (c Collection) Source() string {
-	return c.APIEndpoint
+	return c.apiEndpoint
 }
 
 // Content returns Dropmark items as a content collection
@@ -86,6 +107,15 @@ func (c Collection) Content() []content.Content {
 		result[i] = c.Items[i]
 	}
 	return result
+}
+
+func (c *Collection) addError(err error) {
+	c.errors = multierror.Append(c.errors, err)
+}
+
+// Errors returns any errors reported at the collection level
+func (c Collection) Errors() *multierror.Error {
+	return c.errors
 }
 
 // Thumbnails represents a group of images
@@ -120,6 +150,7 @@ type Item struct {
 	UserEmail     string      `json:"user_email,omitempty"`
 	UserAvatarURL *Thumbnails `json:"user_avatar,omitempty"`
 
+	index            int
 	title            Title
 	summary          Summary
 	targetURL        *url.URL
@@ -128,17 +159,19 @@ type Item struct {
 	featuredImageURL *url.URL
 	contentKeys      content.Keys
 	resource         *harvester.HarvestedResource
+	errors           *multierror.Error
 }
 
-func (i *Item) init(ch *harvester.ContentHarvester, parentSpan opentracing.Span) {
+func (i *Item) init(c *Collection, index int, ch *harvester.ContentHarvester, parentSpan opentracing.Span) {
+	i.index = index
 	resources := ch.HarvestResources(i.Link, parentSpan).Resources
 	if resources != nil && len(resources) == 1 {
 		i.resource = resources[0]
 	} else {
 		if resources == nil {
-			fmt.Printf("Unable to harvest resource: %q, resources came back nil\n", i.Link)
+			i.addError(c, fmt.Errorf("unable to harvest Dropmark item %d link %q, resources came back nil", index, i.Link))
 		} else {
-			fmt.Printf("Unable to harvest resource: %q, resources len is %d\n", i.Link, len(resources))
+			i.addError(c, fmt.Errorf("unable to harvest Dropmark item %d link %q, resources len is %d", index, i.Link, len(resources)))
 		}
 	}
 	i.title = Title(i.Name)
@@ -159,6 +192,16 @@ func (i *Item) init(ch *harvester.ContentHarvester, parentSpan opentracing.Span)
 		// If the content is just a single URL, replace it with the Description
 		i.Content = i.Description
 	}
+}
+
+func (i *Item) addError(c *Collection, err error) {
+	i.errors = multierror.Append(i.errors, err)
+	c.addError(err)
+}
+
+// Errors returns any errors reported at the Item level
+func (i Item) Errors() *multierror.Error {
+	return i.errors
 }
 
 func (i Item) Title() content.Title {
@@ -230,9 +273,9 @@ func (i Item) Target() *url.URL {
 }
 
 // GetDropmarkCollection takes a Dropmark apiEndpoint and creates a Collection object
-func GetDropmarkCollection(ch *harvester.ContentHarvester, parentSpan opentracing.Span, apiEndpoint string, userAgent string, timeout time.Duration) (*Collection, error) {
+func GetDropmarkCollection(ch *harvester.ContentHarvester, parentSpan opentracing.Span, verbose bool, apiEndpoint string, userAgent string, timeout time.Duration) (*Collection, error) {
 	result := new(Collection)
-	result.APIEndpoint = apiEndpoint
+	result.apiEndpoint = apiEndpoint
 
 	httpClient := http.Client{
 		Timeout: timeout,
@@ -247,27 +290,23 @@ func GetDropmarkCollection(ch *harvester.ContentHarvester, parentSpan opentracin
 		return nil, fmt.Errorf("Unable to execute GET request %q: %v", apiEndpoint, getErr)
 	}
 
-	bar := pb.New(int(res.ContentLength)).SetUnits(pb.U_BYTES)
-	bar.Start()
-	reader := bar.NewProxyReader(res.Body)
-	body, readErr := ioutil.ReadAll(reader)
-	bar.FinishPrint(fmt.Sprintf("Completed API request %q", apiEndpoint))
+	var body []byte
+	var readErr error
+	if verbose {
+		bar := pb.New(int(res.ContentLength)).SetUnits(pb.U_BYTES)
+		bar.Start()
+		reader := bar.NewProxyReader(res.Body)
+		body, readErr = ioutil.ReadAll(reader)
+		bar.FinishPrint(fmt.Sprintf("Completed API request %q", apiEndpoint))
+	} else {
+		body, readErr = ioutil.ReadAll(res.Body)
+	}
 
 	if readErr != nil {
 		return nil, fmt.Errorf("Unable to read body from request %q: %v", apiEndpoint, readErr)
 	}
 
 	json.Unmarshal(body, result)
-
-	bar = pb.StartNew(len(result.Items))
-	bar.ShowCounters = true
-	if result.Items != nil {
-		for i := 0; i < len(result.Items); i++ {
-			result.Items[i].init(ch, parentSpan)
-			bar.Increment()
-		}
-	}
-	bar.FinishPrint(fmt.Sprintf("Completed parsing items from %q", apiEndpoint))
-
+	result.init(ch, parentSpan, verbose)
 	return result, nil
 }
