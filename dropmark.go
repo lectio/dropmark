@@ -199,7 +199,7 @@ func (i *Item) init(c *Collection, index int, cntHarvester *harvester.ContentHar
 	if i.resource != nil {
 		isURLValid, isDestValid := i.resource.IsValid()
 		if isURLValid && isDestValid {
-			_, _, i.targetURL = i.resource.GetURLs()
+			i.targetURL, _, _ = i.resource.GetURLs()
 		} else {
 			i.addError(c, fmt.Errorf("harvested Dropmark resource item %d link %q was not valid, isURLValid: %v, isDestValid: %v", index, i.Link, isURLValid, isDestValid))
 			i.targetURL, _ = url.Parse(i.Link)
