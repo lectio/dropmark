@@ -12,9 +12,9 @@ import (
 
 type DropmarkSuite struct {
 	suite.Suite
-	observatory observe.Observatory
-	ch          *harvester.ContentHarvester
-	span        opentracing.Span
+	observatory  observe.Observatory
+	cntHarvester *harvester.ContentHarvester
+	span         opentracing.Span
 }
 
 func (suite *DropmarkSuite) SetupSuite() {
@@ -26,7 +26,7 @@ func (suite *DropmarkSuite) SetupSuite() {
 	observatory := observe.MakeObservatoryFromEnv()
 	suite.observatory = observatory
 	suite.span = observatory.StartTrace("DropmarkSuite")
-	suite.ch = harvester.MakeContentHarvester(suite.observatory, harvester.DefaultIgnoreURLsRegExList, harvester.DefaultCleanURLsRegExList, false)
+	suite.cntHarvester = harvester.MakeContentHarvester(suite.observatory, harvester.DefaultIgnoreURLsRegExList, harvester.DefaultCleanURLsRegExList, false)
 }
 
 func (suite *DropmarkSuite) TearDownSuite() {
@@ -35,7 +35,7 @@ func (suite *DropmarkSuite) TearDownSuite() {
 }
 
 func (suite *DropmarkSuite) TestDropmarkCollection() {
-	collection, getErr := GetDropmarkCollection(suite.ch, suite.span, false, "https://shah.dropmark.com/652682.json", HTTPUserAgent, HTTPTimeout)
+	collection, getErr := GetDropmarkCollection(suite.cntHarvester, suite.span, false, "https://shah.dropmark.com/652682.json", HTTPUserAgent, HTTPTimeout)
 	suite.Nil(getErr, "Unable to retrieve Dropmark collection from %q: %v.", collection.apiEndpoint, getErr)
 	suite.Nil(collection.Errors(), "There should be no errors at the collection level")
 	suite.Equal(len(collection.Items), 3)
