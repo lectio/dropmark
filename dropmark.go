@@ -300,21 +300,22 @@ func GetDropmarkCollection(cntHarvester *harvester.ContentHarvester, parentSpan 
 		return nil, fmt.Errorf("Unable to create request %q: %v", apiEndpoint, reqErr)
 	}
 	req.Header.Set("User-Agent", userAgent)
-	res, getErr := httpClient.Do(req)
+	resp, getErr := httpClient.Do(req)
 	if getErr != nil {
 		return nil, fmt.Errorf("Unable to execute GET request %q: %v", apiEndpoint, getErr)
 	}
+	defer resp.Body.Close()
 
 	var body []byte
 	var readErr error
 	if verbose {
-		bar := pb.New(int(res.ContentLength)).SetUnits(pb.U_BYTES)
+		bar := pb.New(int(resp.ContentLength)).SetUnits(pb.U_BYTES)
 		bar.Start()
-		reader := bar.NewProxyReader(res.Body)
+		reader := bar.NewProxyReader(resp.Body)
 		body, readErr = ioutil.ReadAll(reader)
 		bar.FinishPrint(fmt.Sprintf("Completed Dropmark API request %q", apiEndpoint))
 	} else {
-		body, readErr = ioutil.ReadAll(res.Body)
+		body, readErr = ioutil.ReadAll(resp.Body)
 	}
 
 	if readErr != nil {
