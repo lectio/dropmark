@@ -26,7 +26,7 @@ func (suite *DropmarkSuite) SetupSuite() {
 	observatory := observe.MakeObservatoryFromEnv()
 	suite.observatory = observatory
 	suite.span = observatory.StartTrace("DropmarkSuite")
-	suite.cntHarvester = harvester.MakeContentHarvester(suite.observatory, harvester.DefaultIgnoreURLsRegExList, harvester.DefaultCleanURLsRegExList, false)
+	suite.cntHarvester = harvester.MakeDefaultContentHarvester(observatory)
 }
 
 func (suite *DropmarkSuite) TearDownSuite() {
