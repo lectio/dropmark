@@ -18,6 +18,7 @@ import (
 	"gopkg.in/jdkato/prose.v2"
 )
 
+// Title defines a Dropmark item's title in various formats
 type Title struct {
 	item     *Item
 	original string
@@ -40,6 +41,7 @@ func (t Title) OpenGraphTitle() (string, bool) {
 	return t.item.OpenGraphContent("title", nil)
 }
 
+// Summary defines a Dropmark item's description/summary in various formats
 type Summary struct {
 	item     *Item
 	original string
@@ -60,9 +62,8 @@ func (s Summary) FirstSentenceOfBody() (string, error) {
 	sentences := content.Sentences()
 	if len(sentences) > 0 {
 		return sentences[0].Text, nil
-	} else {
-		return "", errors.New("Unable to find any sentences in the body")
 	}
+	return "", errors.New("Unable to find any sentences in the body")
 }
 
 // OpenGraphDescription uses the HarvestedResource's open graph description if available
@@ -195,7 +196,17 @@ func (i *Item) init(c *Collection, index int, cntHarvester *harvester.ContentHar
 		i.categories[t] = i.Tags[t].Name
 	}
 
-	i.targetURL, _ = url.Parse(i.Link)
+	if i.resource != nil {
+		isURLValid, isDestValid := i.resource.IsValid()
+		if isURLValid && isDestValid {
+			_, _, i.targetURL = i.resource.GetURLs()
+		} else {
+			i.addError(c, fmt.Errorf("harvested Dropmark resource item %d link %q was not valid, isURLValid: %v, isDestValid: %v", index, i.Link, isURLValid, isDestValid))
+			i.targetURL, _ = url.Parse(i.Link)
+		}
+	} else {
+		i.targetURL, _ = url.Parse(i.Link)
+	}
 	i.createdOn, _ = time.Parse("2006-01-02 15:04:05 MST", i.CreatedAt)
 	i.featuredImageURL, _ = url.Parse(i.Thumbnails.Large)
 	i.contentKeys = content.CreateKeys(i, content.KeyDoesNotExist)
@@ -219,30 +230,37 @@ func (i Item) Errors() *multierror.Error {
 	return i.errors
 }
 
+// Title returns a Dropmark item's title in various formats
 func (i Item) Title() content.Title {
 	return i.title
 }
 
+// Body returns a Dropmark item's main content
 func (i Item) Body() string {
 	return i.Content
 }
 
+// Summary returns a Dropmark item's title in various formats
 func (i Item) Summary() content.Summary {
 	return i.summary
 }
 
+// Categories returns a Dropmark item's tags
 func (i Item) Categories() []string {
 	return i.categories
 }
 
+// CreatedOn returns a Dropmark item's creation date
 func (i Item) CreatedOn() time.Time {
 	return i.createdOn
 }
 
+// FeaturedImage returns a Dropmark item's primary image URL
 func (i Item) FeaturedImage() *url.URL {
 	return i.featuredImageURL
 }
 
+// Keys returns a Dropmark item's identity in various formats
 func (i Item) Keys() content.Keys {
 	return i.contentKeys
 }
@@ -265,7 +283,7 @@ func (i Item) OpenGraphContent(ogKey string, defaultValue *string) (string, bool
 	return rc.GetOpenGraphMetaTag(ogKey)
 }
 
-// TwitterContent uses the content's TwitterCard meta data
+// TwitterCardContent uses the content's TwitterCard meta data
 func (i Item) TwitterCardContent(twitterKey string, defaultValue *string) (string, bool) {
 	if i.resource == nil {
 		if defaultValue == nil {
@@ -283,6 +301,7 @@ func (i Item) TwitterCardContent(twitterKey string, defaultValue *string) (strin
 	return rc.GetTwitterMetaTag(twitterKey)
 }
 
+// Target is the URL that Dropmark item points to
 func (i Item) Target() *url.URL {
 	return i.targetURL
 }
