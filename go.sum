@@ -69,6 +69,12 @@ github.com/lectio/harvester v0.0.0-20190328131814-a04d9e97fd5c h1:y+RYGVDM1kKOjB
 github.com/lectio/harvester v0.0.0-20190328131814-a04d9e97fd5c/go.mod h1:yKHFV+hr0MIDD+nVqZsgoT/sqskUNRPchNtjg1oVj1Y=
 github.com/lectio/harvester v0.0.0-20190328154655-ed9c25fa9451 h1:hGVbH+CYkIkjX8oZBYVn0LsXKKaWsP1NoetUNZf0lBs=
 github.com/lectio/harvester v0.0.0-20190328154655-ed9c25fa9451/go.mod h1:yKHFV+hr0MIDD+nVqZsgoT/sqskUNRPchNtjg1oVj1Y=
+github.com/lectio/harvester v0.0.0-20190330160331-74107f595efc h1:2AaRZl++OaqIA76Qs/OAr8/xiVSOUlJ27Gob3GserIE=
+github.com/lectio/harvester v0.0.0-20190330160331-74107f595efc/go.mod h1:inTJPxi0K69KZQOkDJG47RpETOlPVdTAl8CkaHNpLEY=
+github.com/lectio/harvester v0.0.0-20190330161551-53b737a7e78f h1:ubxNjnHn/O2lSoF1NB3SFKQei8JuQMIHfAyZwKwUorE=
+github.com/lectio/harvester v0.0.0-20190330161551-53b737a7e78f/go.mod h1:Aiskmb1dVV/VOzmNBH7Z7cSBo4EaS50DRv75u9Vx/i8=
+github.com/lectio/observe v0.0.0-20190330161145-24f6fc031cdd h1:Tj3xxsz9XYOw/BaCE7dYFOlwhMlGYJNu3BH9cPBhsw8=
+github.com/lectio/observe v0.0.0-20190330161145-24f6fc031cdd/go.mod h1:U70gz4MZji5a71zVhxqnnip4ca5Tjwn64Ev9NeqGPmc=
 github.com/lectio/score v0.0.0-20190322201605-d948d123c684 h1:N2AWEUa/t2I2bgOXTqAptjimiiMH2y0EW30yf5cZnpg=
 github.com/lectio/score v0.0.0-20190322201605-d948d123c684/go.mod h1:PVdE9/m4fSNIe+W7YjmiKxWL9Ogh1g2Cpvz+OH44YPI=
 github.com/lectio/score v0.0.0-20190325155124-2fb072ee8e8e h1:T/6AMKNIsYAj6ZM5X/WvRSmt3xseCBHt9ynEU6KsQLw=
@@ -110,6 +116,7 @@ github.com/stretchr/testify v1.3.0 h1:TivCn/peBQ7UY8ooIcPgZFpTNSz0Q2U6UrFlUfqbe0
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/timakin/bodyclose v0.0.0-20190329150117-6644437f9794 h1:LiDYEjPlACst/i/uVdb107zi2WiPgeMPMzPCkoc8wLw=
 github.com/timakin/bodyclose v0.0.0-20190329150117-6644437f9794/go.mod h1:Qimiffbc6q9tBWlVV6x0P9sat/ao1xEkREYPPj9hphk=
+github.com/timakin/bodyclose v0.0.0-20190330154753-8ad59793c6e0/go.mod h1:Qimiffbc6q9tBWlVV6x0P9sat/ao1xEkREYPPj9hphk=
 github.com/uber-go/atomic v1.3.2 h1:Azu9lPBWRNKzYXSIwRfgRuDuS0YKsK4NFhiQv98gkxo=
 github.com/uber-go/atomic v1.3.2/go.mod h1:/Ct5t2lcmbJ4OSe/waGBoaVvVqtO0bmtfVNex1PFV8g=
 github.com/uber/jaeger-client-go v2.15.0+incompatible h1:NP3qsSqNxh8VYr956ur1N/1C1PjvOJnJykCzcD5QHbk=
@@ -168,8 +175,11 @@ gonum.org/v1/gonum v0.0.0-20190329081112-e6c0b279139b h1:xeSWrDekTIAdLZnM0qYGi3I
 gonum.org/v1/gonum v0.0.0-20190329081112-e6c0b279139b/go.mod h1:2ltnJ7xHfj0zHS40VVPYEAAMTa3ZGguvHGBSJeRWqE0=
 gonum.org/v1/gonum v0.0.0-20190329230704-4b1617dbb056 h1:UUYru3ELurPSUl9OTEi+NUj24iMbLPKLxIz6uvkkw84=
 gonum.org/v1/gonum v0.0.0-20190329230704-4b1617dbb056/go.mod h1:2ltnJ7xHfj0zHS40VVPYEAAMTa3ZGguvHGBSJeRWqE0=
+gonum.org/v1/gonum v0.0.0-20190330083134-779ef2ac207d h1:ShJE9we+7oZ2ZWS32zNTOntaiKgC3zCnzvTbDLTGZhQ=
+gonum.org/v1/gonum v0.0.0-20190330083134-779ef2ac207d/go.mod h1:2ltnJ7xHfj0zHS40VVPYEAAMTa3ZGguvHGBSJeRWqE0=
 gonum.org/v1/netlib v0.0.0-20190313105609-8cb42192e0e0/go.mod h1:wa6Ws7BG/ESfp6dHfk7C6KdzKA7wR7u/rKwOGE66zvw=
 gonum.org/v1/netlib v0.0.0-20190327185612-36a5df7c87e8/go.mod h1:1s8qPuduN1S8OkSgBbxHf/i3M3yqeI1AEN3cqptwzQs=
+gonum.org/v1/netlib v0.0.0-20190330074845-29ff885a0a02/go.mod h1:1s8qPuduN1S8OkSgBbxHf/i3M3yqeI1AEN3cqptwzQs=
 gopkg.in/cheggaaa/pb.v1 v1.0.28 h1:n1tBJnnK2r7g9OW2btFH91V92STTUevLXYFb8gy9EMk=
 gopkg.in/cheggaaa/pb.v1 v1.0.28/go.mod h1:V/YB90LKu/1FcN3WVnfiiE5oMCibMjukxqG/qStrOgw=
 gopkg.in/jdkato/prose.v2 v2.0.0-20180825173540-767a23049b9e h1:yDDVJ347kU7Ro+H2CRgKmAEbFXfHwjyPuXgVd6H+3N8=

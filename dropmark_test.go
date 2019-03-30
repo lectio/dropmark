@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/lectio/harvester"
+	"github.com/lectio/observe"
 	"github.com/opentracing/opentracing-go"
-	"github.com/shah/observe-go"
 	"github.com/stretchr/testify/suite"
 )
 
