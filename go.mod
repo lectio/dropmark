@@ -7,7 +7,7 @@ require (
 	github.com/fatih/color v1.7.0 // indirect
 	github.com/gosimple/slug v1.4.2 // indirect
 	github.com/hashicorp/go-multierror v1.0.0
-	github.com/lectio/content v0.0.0-20190330003039-7d7793eb2866
+	github.com/lectio/content v0.0.0-20190330023900-74fc17beaa20
 	github.com/lectio/harvester v0.0.0-20190328154655-ed9c25fa9451
 	github.com/lectio/score v0.0.0-20190325180914-df043eb798d2
 	github.com/mattn/go-colorable v0.1.1 // indirect

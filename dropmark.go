@@ -18,18 +18,26 @@ import (
 	"gopkg.in/jdkato/prose.v2"
 )
 
-type Title string
+type Title struct {
+	item     *Item
+	original string
+}
 
 // Original is the title's original text
 func (t Title) Original() string {
-	return string(t)
+	return t.original
 }
 
 var sourceNameAsSuffixRegEx = regexp.MustCompile(` \| .*$`) // Removes " | Healthcare IT News" from a title like "xyz title | Healthcare IT News"
 
 // Clean is the title's "cleaned up text" (which removes "| ..."" suffixes)
 func (t Title) Clean() string {
-	return sourceNameAsSuffixRegEx.ReplaceAllString(string(t), "")
+	return sourceNameAsSuffixRegEx.ReplaceAllString(t.original, "")
+}
+
+// OpenGraphTitle uses the HarvestedResource's open graph title if available
+func (t Title) OpenGraphTitle() (string, bool) {
+	return t.item.OpenGraphContent("title", nil)
 }
 
 type Summary struct {
@@ -57,7 +65,7 @@ func (s Summary) FirstSentenceOfBody() (string, error) {
 	}
 }
 
-// OpenGraphDescription uses the HarvestedResource's open graph content if available
+// OpenGraphDescription uses the HarvestedResource's open graph description if available
 func (s Summary) OpenGraphDescription() (string, bool) {
 	return s.item.OpenGraphContent("description", nil)
 }
@@ -180,7 +188,7 @@ func (i *Item) init(c *Collection, index int, cntHarvester *harvester.ContentHar
 			i.addError(c, fmt.Errorf("unable to harvest Dropmark item %d link %q, resources len is %d", index, i.Link, len(resources)))
 		}
 	}
-	i.title = Title(i.Name)
+	i.title = Title{item: i, original: i.Name}
 	i.summary = Summary{item: i, original: i.Description}
 	i.categories = make([]string, len(i.Tags))
 	for t := 0; t < len(i.Tags); t++ {

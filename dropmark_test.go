@@ -46,6 +46,9 @@ func (suite *DropmarkSuite) TestDropmarkCollection() {
 	suite.Equal(item.Summary().Original(), "\u200bOrganizations continue to invest heavily in cybersecurity efforts to safeguard themselves against threats, but far fewer have signed on for cyber insurance to protect their firms\u00a0afteran attack. Why not? What roadblocks exist, and what steps could the industry take to help clear them?")
 	suite.Nil(item.Errors(), "There should be no errors at the item level")
 
+	title, _ := item.Title().OpenGraphTitle()
+	suite.Equal(title, "Demystifying cyber insurance coverage")
+
 	descr, _ := item.Summary().OpenGraphDescription()
 	suite.True(len(descr) > 0, "Description should be available as og:description in <meta>")
 
