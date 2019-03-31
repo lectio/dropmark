@@ -10,10 +10,7 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/hashicorp/go-multierror"
 	"github.com/lectio/content"
-	"github.com/lectio/harvester"
-	"github.com/opentracing/opentracing-go"
 	"gopkg.in/cheggaaa/pb.v1"
 	"gopkg.in/jdkato/prose.v2"
 )
@@ -82,10 +79,11 @@ type Collection struct {
 	Name        string  `json:"name,omitempty"`
 	Items       []*Item `json:"items,omitempty"`
 	apiEndpoint string
-	errors      *multierror.Error
+	errors      []error
 }
 
-func (c *Collection) init(cntHarvester *harvester.ContentHarvester, parentSpan opentracing.Span, verbose bool) {
+func (c *Collection) init(cleanCurationTargetRule content.CleanResourceParamsRule, ignoreCurationTargetRule content.IgnoreResourceRule,
+	followHTMLRedirect content.FollowRedirectsInCurationTargetHTMLPayload, verbose bool) {
 	var bar *pb.ProgressBar
 	if verbose {
 		bar = pb.StartNew(len(c.Items))
@@ -94,7 +92,7 @@ func (c *Collection) init(cntHarvester *harvester.ContentHarvester, parentSpan o
 	ch := make(chan int)
 	if c.Items != nil {
 		for i := 0; i < len(c.Items); i++ {
-			go c.Items[i].init(c, i, cntHarvester, parentSpan, ch)
+			go c.Items[i].init(c, i, ch, cleanCurationTargetRule, ignoreCurationTargetRule, followHTMLRedirect)
 		}
 	}
 
@@ -125,11 +123,11 @@ func (c Collection) Content() []content.Content {
 }
 
 func (c *Collection) addError(err error) {
-	c.errors = multierror.Append(c.errors, err)
+	c.errors = append(c.errors, err)
 }
 
 // Errors returns any errors reported at the collection level
-func (c Collection) Errors() *multierror.Error {
+func (c Collection) Errors() []error {
 	return c.errors
 }
 
@@ -173,21 +171,16 @@ type Item struct {
 	createdOn        time.Time
 	featuredImageURL *url.URL
 	contentKeys      content.Keys
-	resource         *harvester.HarvestedResource
-	errors           *multierror.Error
+	resource         *content.HarvestedResource
+	errors           []error
 }
 
-func (i *Item) init(c *Collection, index int, cntHarvester *harvester.ContentHarvester, parentSpan opentracing.Span, ch chan<- int) {
+func (i *Item) init(c *Collection, index int, ch chan<- int, cleanCurationTargetRule content.CleanResourceParamsRule, ignoreCurationTargetRule content.IgnoreResourceRule,
+	followHTMLRedirect content.FollowRedirectsInCurationTargetHTMLPayload) {
 	i.index = index
-	resources := cntHarvester.HarvestResources(i.Link, parentSpan).Resources
-	if resources != nil && len(resources) == 1 {
-		i.resource = resources[0]
-	} else {
-		if resources == nil {
-			i.addError(c, fmt.Errorf("unable to harvest Dropmark item %d link %q, resources came back nil", index, i.Link))
-		} else {
-			i.addError(c, fmt.Errorf("unable to harvest Dropmark item %d link %q, resources len is %d", index, i.Link, len(resources)))
-		}
+	i.resource = content.HarvestResource(i.Link, cleanCurationTargetRule, ignoreCurationTargetRule, followHTMLRedirect)
+	if i.resource == nil {
+		i.addError(c, fmt.Errorf("unable to harvest Dropmark item %d link %q, resource came back nil", index, i.Link))
 	}
 	i.title = Title{item: i, original: i.Name}
 	i.summary = Summary{item: i, original: i.Description}
@@ -221,12 +214,12 @@ func (i *Item) init(c *Collection, index int, cntHarvester *harvester.ContentHar
 }
 
 func (i *Item) addError(c *Collection, err error) {
-	i.errors = multierror.Append(i.errors, err)
+	i.errors = append(i.errors, err)
 	c.addError(err)
 }
 
 // Errors returns any errors reported at the Item level
-func (i Item) Errors() *multierror.Error {
+func (i Item) Errors() []error {
 	return i.errors
 }
 
@@ -273,14 +266,14 @@ func (i Item) OpenGraphContent(ogKey string, defaultValue *string) (string, bool
 		}
 		return *defaultValue, true
 	}
-	rc := i.resource.ResourceContent()
-	if rc == nil {
+	ir := i.resource.InspectionResults()
+	if ir == nil {
 		if defaultValue == nil {
 			return "", false
 		}
 		return *defaultValue, true
 	}
-	return rc.GetOpenGraphMetaTag(ogKey)
+	return ir.GetOpenGraphMetaTag(ogKey)
 }
 
 // TwitterCardContent uses the content's TwitterCard meta data
@@ -291,23 +284,24 @@ func (i Item) TwitterCardContent(twitterKey string, defaultValue *string) (strin
 		}
 		return *defaultValue, true
 	}
-	rc := i.resource.ResourceContent()
-	if rc == nil {
+	ir := i.resource.InspectionResults()
+	if ir == nil {
 		if defaultValue == nil {
 			return "", false
 		}
 		return *defaultValue, true
 	}
-	return rc.GetTwitterMetaTag(twitterKey)
+	return ir.GetTwitterMetaTag(twitterKey)
 }
 
 // Target is the URL that Dropmark item points to
-func (i Item) Target() *url.URL {
-	return i.targetURL
+func (i Item) Target() *content.HarvestedResource {
+	return i.resource
 }
 
 // GetDropmarkCollection takes a Dropmark apiEndpoint and creates a Collection object
-func GetDropmarkCollection(cntHarvester *harvester.ContentHarvester, parentSpan opentracing.Span, verbose bool, apiEndpoint string, userAgent string, timeout time.Duration) (*Collection, error) {
+func GetDropmarkCollection(apiEndpoint string, cleanCurationTargetRule content.CleanResourceParamsRule, ignoreCurationTargetRule content.IgnoreResourceRule,
+	followHTMLRedirect content.FollowRedirectsInCurationTargetHTMLPayload, verbose bool, userAgent string, timeout time.Duration) (*Collection, error) {
 	result := new(Collection)
 	result.apiEndpoint = apiEndpoint
 
@@ -342,6 +336,6 @@ func GetDropmarkCollection(cntHarvester *harvester.ContentHarvester, parentSpan 
 	}
 
 	json.Unmarshal(body, result)
-	result.init(cntHarvester, parentSpan, verbose)
+	result.init(cleanCurationTargetRule, ignoreCurationTargetRule, followHTMLRedirect, verbose)
 	return result, nil
 }

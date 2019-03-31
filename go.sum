@@ -61,6 +61,14 @@ github.com/lectio/content v0.0.0-20190330003039-7d7793eb2866 h1:rxr4aYg1XKcR3cbN
 github.com/lectio/content v0.0.0-20190330003039-7d7793eb2866/go.mod h1:jVcxVaVNsKooy1V753qCzi1jHW5riqjh5iD82cbDyzc=
 github.com/lectio/content v0.0.0-20190330023900-74fc17beaa20 h1:1VM7I3fr+9t1z3n7rpnYD8q1a3HrXdvShN9g6FxXY0w=
 github.com/lectio/content v0.0.0-20190330023900-74fc17beaa20/go.mod h1:jVcxVaVNsKooy1V753qCzi1jHW5riqjh5iD82cbDyzc=
+github.com/lectio/content v0.0.0-20190331170634-694f53190ad0 h1:HJ6t3zTQWkGKZLPk73E54VjVyotX3ac9DDhNiPpBy3w=
+github.com/lectio/content v0.0.0-20190331170634-694f53190ad0/go.mod h1:Jbb9LwztDexbeqOj4Jqry2dT25P2up8QqCWoF1s0FWg=
+github.com/lectio/content v0.0.0-20190331171135-f8d20c25cd08 h1:o3Vka5MLvHs86hcyogw8SjdTt+UMy+BegOkI+ouUdMc=
+github.com/lectio/content v0.0.0-20190331171135-f8d20c25cd08/go.mod h1:Jbb9LwztDexbeqOj4Jqry2dT25P2up8QqCWoF1s0FWg=
+github.com/lectio/content v0.0.0-20190331172830-255125a14827 h1:pZiQeJf/UDEgNiC2xRip9/K3HpDRaqYbUU0mNeQrxII=
+github.com/lectio/content v0.0.0-20190331172830-255125a14827/go.mod h1:Jbb9LwztDexbeqOj4Jqry2dT25P2up8QqCWoF1s0FWg=
+github.com/lectio/content v0.0.0-20190331175429-ec156eb0b467 h1:f8f7i8dfWzodTfMwS8B89tjzoZv8vr1r+p9wui877zI=
+github.com/lectio/content v0.0.0-20190331175429-ec156eb0b467/go.mod h1:Jbb9LwztDexbeqOj4Jqry2dT25P2up8QqCWoF1s0FWg=
 github.com/lectio/harvester v0.0.0-20190323193611-386f8794c966 h1:mYGITnJ/9YRTsf6VglRN1ApKKtYboiZqQaWdAKvZjNk=
 github.com/lectio/harvester v0.0.0-20190323193611-386f8794c966/go.mod h1:ApOjx8MRzEjLcq0nA7kVGZHnv++F3uF7EoOWriQiRfE=
 github.com/lectio/harvester v0.0.0-20190325024938-d83e2e4eacd2 h1:0r9Q05g4aVX+OM3xiXe3K6iBoguVyeDv6P1mQGgGMRM=
@@ -81,6 +89,7 @@ github.com/lectio/score v0.0.0-20190325155124-2fb072ee8e8e h1:T/6AMKNIsYAj6ZM5X/
 github.com/lectio/score v0.0.0-20190325155124-2fb072ee8e8e/go.mod h1:PVdE9/m4fSNIe+W7YjmiKxWL9Ogh1g2Cpvz+OH44YPI=
 github.com/lectio/score v0.0.0-20190325172306-57d38b958af9/go.mod h1:PVdE9/m4fSNIe+W7YjmiKxWL9Ogh1g2Cpvz+OH44YPI=
 github.com/lectio/score v0.0.0-20190325180914-df043eb798d2/go.mod h1:PVdE9/m4fSNIe+W7YjmiKxWL9Ogh1g2Cpvz+OH44YPI=
+github.com/lectio/score v0.0.0-20190330164325-6c58408147f4/go.mod h1:PVdE9/m4fSNIe+W7YjmiKxWL9Ogh1g2Cpvz+OH44YPI=
 github.com/mattn/go-colorable v0.1.1 h1:G1f5SKeVxmagw/IyvzvtZE4Gybcc4Tr1tf7I8z0XgOg=
 github.com/mattn/go-colorable v0.1.1/go.mod h1:FuOcm+DKB9mbwrcAfNl7/TZVBZ6rcnceauSikq3lYCQ=
 github.com/mattn/go-isatty v0.0.5 h1:tHXDdz1cpzGaovsTB+TVB8q90WEokoVmfMqoVcrLUgw=
@@ -168,6 +177,7 @@ golang.org/x/tools v0.0.0-20190328211700-ab21143f2384/go.mod h1:LCzVGOaR6xXOjkQ3
 golang.org/x/tools v0.0.0-20190329225845-a96101f168f4/go.mod h1:LCzVGOaR6xXOjkQ3onu1FJEFr0SW1gC7cKk1uF8kGRs=
 golang.org/x/tools v0.0.0-20190330150233-1cd2f21070ec h1:zBrrEzFehtYA8+AGA7V6+ZKjDSf8ysB3NTBDbNZGo/M=
 golang.org/x/tools v0.0.0-20190330150233-1cd2f21070ec/go.mod h1:LCzVGOaR6xXOjkQ3onu1FJEFr0SW1gC7cKk1uF8kGRs=
+golang.org/x/tools v0.0.0-20190330180304-aef51cc3777c/go.mod h1:LCzVGOaR6xXOjkQ3onu1FJEFr0SW1gC7cKk1uF8kGRs=
 gonum.org/v1/gonum v0.0.0-20190327053044-9996f1428eb6/go.mod h1:2ltnJ7xHfj0zHS40VVPYEAAMTa3ZGguvHGBSJeRWqE0=
 gonum.org/v1/gonum v0.0.0-20190328132403-c38fb5f9ef41 h1:3EIv67i0H+Ls68yWdl11wen7ai7GeGNqSMWaG8mHv44=
 gonum.org/v1/gonum v0.0.0-20190328132403-c38fb5f9ef41/go.mod h1:2ltnJ7xHfj0zHS40VVPYEAAMTa3ZGguvHGBSJeRWqE0=
@@ -177,6 +187,8 @@ gonum.org/v1/gonum v0.0.0-20190329230704-4b1617dbb056 h1:UUYru3ELurPSUl9OTEi+NUj
 gonum.org/v1/gonum v0.0.0-20190329230704-4b1617dbb056/go.mod h1:2ltnJ7xHfj0zHS40VVPYEAAMTa3ZGguvHGBSJeRWqE0=
 gonum.org/v1/gonum v0.0.0-20190330083134-779ef2ac207d h1:ShJE9we+7oZ2ZWS32zNTOntaiKgC3zCnzvTbDLTGZhQ=
 gonum.org/v1/gonum v0.0.0-20190330083134-779ef2ac207d/go.mod h1:2ltnJ7xHfj0zHS40VVPYEAAMTa3ZGguvHGBSJeRWqE0=
+gonum.org/v1/gonum v0.0.0-20190331082636-9a0642d3dda0 h1:rFL0Rvhj/DKdO4TtKXdIxxLYsurcEN3dG/nIvhl7QWk=
+gonum.org/v1/gonum v0.0.0-20190331082636-9a0642d3dda0/go.mod h1:2ltnJ7xHfj0zHS40VVPYEAAMTa3ZGguvHGBSJeRWqE0=
 gonum.org/v1/netlib v0.0.0-20190313105609-8cb42192e0e0/go.mod h1:wa6Ws7BG/ESfp6dHfk7C6KdzKA7wR7u/rKwOGE66zvw=
 gonum.org/v1/netlib v0.0.0-20190327185612-36a5df7c87e8/go.mod h1:1s8qPuduN1S8OkSgBbxHf/i3M3yqeI1AEN3cqptwzQs=
 gonum.org/v1/netlib v0.0.0-20190330074845-29ff885a0a02/go.mod h1:1s8qPuduN1S8OkSgBbxHf/i3M3yqeI1AEN3cqptwzQs=

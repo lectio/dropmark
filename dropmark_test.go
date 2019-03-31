@@ -1,41 +1,57 @@
 package dropmark
 
 import (
-	"os"
+	"fmt"
+	"net/url"
+	"regexp"
 	"testing"
 
-	"github.com/lectio/harvester"
-	"github.com/lectio/observe"
-	"github.com/opentracing/opentracing-go"
 	"github.com/stretchr/testify/suite"
 )
 
+type ignoreURLsRegExList []*regexp.Regexp
+type removeParamsFromURLsRegExList []*regexp.Regexp
+
+var defaultIgnoreURLsRegExList ignoreURLsRegExList = []*regexp.Regexp{regexp.MustCompile(`^https://twitter.com/(.*?)/status/(.*)$`), regexp.MustCompile(`https://t.co`)}
+var defaultCleanURLsRegExList removeParamsFromURLsRegExList = []*regexp.Regexp{regexp.MustCompile(`^utm_`)}
+
+func (l ignoreURLsRegExList) IgnoreResource(url *url.URL) (bool, string) {
+	URLtext := url.String()
+	for _, regEx := range l {
+		if regEx.MatchString(URLtext) {
+			return true, fmt.Sprintf("Matched Ignore Rule `%s`", regEx.String())
+		}
+	}
+	return false, ""
+}
+
+func (l removeParamsFromURLsRegExList) CleanResourceParams(url *url.URL) bool {
+	// we try to clean all URLs, not specific ones
+	return true
+}
+
+func (l removeParamsFromURLsRegExList) RemoveQueryParamFromResourceURL(paramName string) (bool, string) {
+	for _, regEx := range l {
+		if regEx.MatchString(paramName) {
+			return true, fmt.Sprintf("Matched cleaner rule `%s`", regEx.String())
+		}
+	}
+
+	return false, ""
+}
+
 type DropmarkSuite struct {
 	suite.Suite
-	observatory  observe.Observatory
-	cntHarvester *harvester.ContentHarvester
-	span         opentracing.Span
 }
 
 func (suite *DropmarkSuite) SetupSuite() {
-	_, set := os.LookupEnv("JAEGER_SERVICE_NAME")
-	if !set {
-		os.Setenv("JAEGER_SERVICE_NAME", "Lectio Harvester Test Suite")
-	}
-
-	observatory := observe.MakeObservatoryFromEnv()
-	suite.observatory = observatory
-	suite.span = observatory.StartTrace("DropmarkSuite")
-	suite.cntHarvester = harvester.MakeDefaultContentHarvester(observatory)
 }
 
 func (suite *DropmarkSuite) TearDownSuite() {
-	suite.span.Finish()
-	suite.observatory.Close()
 }
 
 func (suite *DropmarkSuite) TestDropmarkCollection() {
-	collection, getErr := GetDropmarkCollection(suite.cntHarvester, suite.span, false, "https://shah.dropmark.com/652682.json", HTTPUserAgent, HTTPTimeout)
+	collection, getErr := GetDropmarkCollection("https://shah.dropmark.com/652682.json", defaultCleanURLsRegExList, defaultIgnoreURLsRegExList, true, false, HTTPUserAgent, HTTPTimeout)
 	suite.Nil(getErr, "Unable to retrieve Dropmark collection from %q: %v.", collection.apiEndpoint, getErr)
 	suite.Nil(collection.Errors(), "There should be no errors at the collection level")
 	suite.Equal(len(collection.Items), 3)
