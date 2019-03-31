@@ -170,7 +170,6 @@ type Item struct {
 	categories       []string
 	createdOn        time.Time
 	featuredImageURL *url.URL
-	contentKeys      content.Keys
 	resource         *content.HarvestedResource
 	errors           []error
 }
@@ -202,7 +201,6 @@ func (i *Item) init(c *Collection, index int, ch chan<- int, cleanCurationTarget
 	}
 	i.createdOn, _ = time.Parse("2006-01-02 15:04:05 MST", i.CreatedAt)
 	i.featuredImageURL, _ = url.Parse(i.Thumbnails.Large)
-	i.contentKeys = content.CreateKeys(i, content.KeyDoesNotExist)
 
 	_, contentURLErr := url.Parse(i.Content)
 	if contentURLErr == nil {
@@ -251,11 +249,6 @@ func (i Item) CreatedOn() time.Time {
 // FeaturedImage returns a Dropmark item's primary image URL
 func (i Item) FeaturedImage() *url.URL {
 	return i.featuredImageURL
-}
-
-// Keys returns a Dropmark item's identity in various formats
-func (i Item) Keys() content.Keys {
-	return i.contentKeys
 }
 
 // OpenGraphContent uses the HarvestedResource's open graph content if available

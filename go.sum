@@ -69,6 +69,8 @@ github.com/lectio/content v0.0.0-20190331172830-255125a14827 h1:pZiQeJf/UDEgNiC2
 github.com/lectio/content v0.0.0-20190331172830-255125a14827/go.mod h1:Jbb9LwztDexbeqOj4Jqry2dT25P2up8QqCWoF1s0FWg=
 github.com/lectio/content v0.0.0-20190331175429-ec156eb0b467 h1:f8f7i8dfWzodTfMwS8B89tjzoZv8vr1r+p9wui877zI=
 github.com/lectio/content v0.0.0-20190331175429-ec156eb0b467/go.mod h1:Jbb9LwztDexbeqOj4Jqry2dT25P2up8QqCWoF1s0FWg=
+github.com/lectio/content v0.0.0-20190331220514-40d46ec7b371 h1:zYLdlVTQFnuTWKnkpumaiy9t5OY3GFoQ52WydHs5oVw=
+github.com/lectio/content v0.0.0-20190331220514-40d46ec7b371/go.mod h1:Jbb9LwztDexbeqOj4Jqry2dT25P2up8QqCWoF1s0FWg=
 github.com/lectio/harvester v0.0.0-20190323193611-386f8794c966 h1:mYGITnJ/9YRTsf6VglRN1ApKKtYboiZqQaWdAKvZjNk=
 github.com/lectio/harvester v0.0.0-20190323193611-386f8794c966/go.mod h1:ApOjx8MRzEjLcq0nA7kVGZHnv++F3uF7EoOWriQiRfE=
 github.com/lectio/harvester v0.0.0-20190325024938-d83e2e4eacd2 h1:0r9Q05g4aVX+OM3xiXe3K6iBoguVyeDv6P1mQGgGMRM=
@@ -189,9 +191,12 @@ gonum.org/v1/gonum v0.0.0-20190330083134-779ef2ac207d h1:ShJE9we+7oZ2ZWS32zNTOnt
 gonum.org/v1/gonum v0.0.0-20190330083134-779ef2ac207d/go.mod h1:2ltnJ7xHfj0zHS40VVPYEAAMTa3ZGguvHGBSJeRWqE0=
 gonum.org/v1/gonum v0.0.0-20190331082636-9a0642d3dda0 h1:rFL0Rvhj/DKdO4TtKXdIxxLYsurcEN3dG/nIvhl7QWk=
 gonum.org/v1/gonum v0.0.0-20190331082636-9a0642d3dda0/go.mod h1:2ltnJ7xHfj0zHS40VVPYEAAMTa3ZGguvHGBSJeRWqE0=
+gonum.org/v1/gonum v0.0.0-20190331200053-3d26580ed485 h1:OB/uP/Puiu5vS5QMRPrXCDWUPb+kt8f1KW8oQzFejQw=
+gonum.org/v1/gonum v0.0.0-20190331200053-3d26580ed485/go.mod h1:2ltnJ7xHfj0zHS40VVPYEAAMTa3ZGguvHGBSJeRWqE0=
 gonum.org/v1/netlib v0.0.0-20190313105609-8cb42192e0e0/go.mod h1:wa6Ws7BG/ESfp6dHfk7C6KdzKA7wR7u/rKwOGE66zvw=
 gonum.org/v1/netlib v0.0.0-20190327185612-36a5df7c87e8/go.mod h1:1s8qPuduN1S8OkSgBbxHf/i3M3yqeI1AEN3cqptwzQs=
 gonum.org/v1/netlib v0.0.0-20190330074845-29ff885a0a02/go.mod h1:1s8qPuduN1S8OkSgBbxHf/i3M3yqeI1AEN3cqptwzQs=
+gonum.org/v1/netlib v0.0.0-20190331212654-76723241ea4e/go.mod h1:kS+toOQn6AQKjmKJ7gzohV1XkqsFehRA2FbsbkopSuQ=
 gopkg.in/cheggaaa/pb.v1 v1.0.28 h1:n1tBJnnK2r7g9OW2btFH91V92STTUevLXYFb8gy9EMk=
 gopkg.in/cheggaaa/pb.v1 v1.0.28/go.mod h1:V/YB90LKu/1FcN3WVnfiiE5oMCibMjukxqG/qStrOgw=
 gopkg.in/jdkato/prose.v2 v2.0.0-20180825173540-767a23049b9e h1:yDDVJ347kU7Ro+H2CRgKmAEbFXfHwjyPuXgVd6H+3N8=
