@@ -294,8 +294,8 @@ func (i Item) TwitterCardContent(twitterKey string, defaultValue *string) (strin
 	return ir.GetTwitterMetaTag(twitterKey)
 }
 
-// Target is the URL that Dropmark item points to
-func (i Item) Target() *content.HarvestedResource {
+// TargetResource is the URL that Dropmark item points to
+func (i Item) TargetResource() *content.HarvestedResource {
 	return i.resource
 }
 
