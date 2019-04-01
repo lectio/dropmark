@@ -15,6 +15,9 @@ import (
 	"gopkg.in/jdkato/prose.v2"
 )
 
+// DropmarkEditorURLDirectiveName is the content.Content.Directive() key for the editor URL
+const DropmarkEditorURLDirectiveName = "editorURL"
+
 // Title defines a Dropmark item's title in various formats
 type Title struct {
 	item     *Item
@@ -148,20 +151,21 @@ type Tag struct {
 
 // Item represents a single Dropmark collection item after JSON unmarshalling is completed
 type Item struct {
-	Link          string      `json:"link,omitempty"`
-	Name          string      `json:"name,omitempty"`
-	Description   string      `json:"description,omitempty"`
-	Content       string      `json:"content,omitempty"`
-	Tags          []*Tag      `json:"tags,omitempty"`
-	CreatedAt     string      `json:"created_at,omitempty"`
-	UpdatedAt     string      `json:"updated_at,omitempty"`
-	ThumbnailURL  string      `json:"thumbnail,omitempty"`
-	Thumbnails    *Thumbnails `json:"thumbnails,omitempty"`
-	UserID        string      `json:"user_id,omitempty"`
-	UserNameShort string      `json:"username,omitempty"`
-	UserNameLong  string      `json:"user_name,omitempty"`
-	UserEmail     string      `json:"user_email,omitempty"`
-	UserAvatarURL *Thumbnails `json:"user_avatar,omitempty"`
+	Link            string      `json:"link,omitempty"`
+	Name            string      `json:"name,omitempty"`
+	Description     string      `json:"description,omitempty"`
+	Content         string      `json:"content,omitempty"`
+	Tags            []*Tag      `json:"tags,omitempty"`
+	CreatedAt       string      `json:"created_at,omitempty"`
+	UpdatedAt       string      `json:"updated_at,omitempty"`
+	ThumbnailURL    string      `json:"thumbnail,omitempty"`
+	Thumbnails      *Thumbnails `json:"thumbnails,omitempty"`
+	UserID          string      `json:"user_id,omitempty"`
+	UserNameShort   string      `json:"username,omitempty"`
+	UserNameLong    string      `json:"user_name,omitempty"`
+	UserEmail       string      `json:"user_email,omitempty"`
+	UserAvatarURL   *Thumbnails `json:"user_avatar,omitempty"`
+	DropmarkEditURL string      `json:"url"`
 
 	index            int
 	title            Title
@@ -172,10 +176,12 @@ type Item struct {
 	featuredImageURL *url.URL
 	resource         *content.HarvestedResource
 	errors           []error
+	directives       map[interface{}]interface{}
 }
 
 func (i *Item) init(c *Collection, index int, ch chan<- int, cleanCurationTargetRule content.CleanResourceParamsRule, ignoreCurationTargetRule content.IgnoreResourceRule,
 	followHTMLRedirect content.FollowRedirectsInCurationTargetHTMLPayload) {
+	i.directives = make(map[interface{}]interface{})
 	i.index = index
 	i.resource = content.HarvestResource(i.Link, cleanCurationTargetRule, ignoreCurationTargetRule, followHTMLRedirect)
 	if i.resource == nil {
@@ -208,6 +214,8 @@ func (i *Item) init(c *Collection, index int, ch chan<- int, cleanCurationTarget
 		// If the content is just a single URL, replace it with the Description
 		i.Content = i.Description
 	}
+	i.directives[DropmarkEditorURLDirectiveName] = i.DropmarkEditURL
+
 	ch <- index
 }
 
@@ -254,6 +262,16 @@ func (i Item) CreatedOn() time.Time {
 // FeaturedImage returns a Dropmark item's primary image URL
 func (i Item) FeaturedImage() *url.URL {
 	return i.featuredImageURL
+}
+
+// Directives returns a Dropmark item's annotations, pragmas, and directives
+func (i Item) Directives() (interface{}, error) {
+	return i.directives, nil
+}
+
+// Directive returns a Dropmark item'specific annotation, pragma, or directives
+func (i Item) Directive(key interface{}) (interface{}, error) {
+	return i.directives[key], nil
 }
 
 // OpenGraphContent uses the HarvestedResource's open graph content if available
