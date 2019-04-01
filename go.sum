@@ -71,6 +71,10 @@ github.com/lectio/content v0.0.0-20190331175429-ec156eb0b467 h1:f8f7i8dfWzodTfMw
 github.com/lectio/content v0.0.0-20190331175429-ec156eb0b467/go.mod h1:Jbb9LwztDexbeqOj4Jqry2dT25P2up8QqCWoF1s0FWg=
 github.com/lectio/content v0.0.0-20190331220514-40d46ec7b371 h1:zYLdlVTQFnuTWKnkpumaiy9t5OY3GFoQ52WydHs5oVw=
 github.com/lectio/content v0.0.0-20190331220514-40d46ec7b371/go.mod h1:Jbb9LwztDexbeqOj4Jqry2dT25P2up8QqCWoF1s0FWg=
+github.com/lectio/content v0.0.0-20190401015118-b781a972263a h1:mVbXl+DlplNY4iZmdMpJ+RG0mJVQoxsxXexXO3/vj8A=
+github.com/lectio/content v0.0.0-20190401015118-b781a972263a/go.mod h1:Jbb9LwztDexbeqOj4Jqry2dT25P2up8QqCWoF1s0FWg=
+github.com/lectio/content v0.0.0-20190401020354-c1c1d46f999a h1:qLuSB9hDAemkoH5Pmv2zvbkXHZ4A/48hmbfU0b16kNw=
+github.com/lectio/content v0.0.0-20190401020354-c1c1d46f999a/go.mod h1:Jbb9LwztDexbeqOj4Jqry2dT25P2up8QqCWoF1s0FWg=
 github.com/lectio/harvester v0.0.0-20190323193611-386f8794c966 h1:mYGITnJ/9YRTsf6VglRN1ApKKtYboiZqQaWdAKvZjNk=
 github.com/lectio/harvester v0.0.0-20190323193611-386f8794c966/go.mod h1:ApOjx8MRzEjLcq0nA7kVGZHnv++F3uF7EoOWriQiRfE=
 github.com/lectio/harvester v0.0.0-20190325024938-d83e2e4eacd2 h1:0r9Q05g4aVX+OM3xiXe3K6iBoguVyeDv6P1mQGgGMRM=

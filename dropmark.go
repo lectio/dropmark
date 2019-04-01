@@ -221,6 +221,11 @@ func (i Item) Errors() []error {
 	return i.errors
 }
 
+// Keys returns a Dropmark item's different keys
+func (i Item) Keys() content.Keys {
+	return i.resource
+}
+
 // Title returns a Dropmark item's title in various formats
 func (i Item) Title() content.Title {
 	return i.title
