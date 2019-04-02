@@ -199,6 +199,7 @@ func (i *Item) defaults(c *Collection, index int) {
 			default:
 				i.addError(c, fmt.Errorf("harvested Dropmark resource item %d body front matter key %s not handled", index, key))
 			}
+			i.directives["body.frontmatter."+key] = value
 		}
 		i.Content = fmt.Sprintf("%s", body)
 	}
@@ -206,8 +207,8 @@ func (i *Item) defaults(c *Collection, index int) {
 
 func (i *Item) init(c *Collection, index int, ch chan<- int, cleanCurationTargetRule content.CleanResourceParamsRule, ignoreCurationTargetRule content.IgnoreResourceRule,
 	followHTMLRedirect content.FollowRedirectsInCurationTargetHTMLPayload) {
-	i.defaults(c, index)
 	i.directives = make(map[interface{}]interface{})
+	i.defaults(c, index)
 	i.index = index
 	i.resource = content.HarvestResource(i.Link, cleanCurationTargetRule, ignoreCurationTargetRule, followHTMLRedirect)
 	if i.resource == nil {
