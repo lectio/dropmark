@@ -234,13 +234,6 @@ func (i *Item) init(c *Collection, index int, ch chan<- int, cleanCurationTarget
 	}
 	i.createdOn, _ = time.Parse("2006-01-02 15:04:05 MST", i.CreatedAt)
 	i.featuredImageURL, _ = url.Parse(i.Thumbnails.Large)
-
-	_, contentURLErr := url.Parse(i.Content)
-	if contentURLErr == nil {
-		// Sometimes in Dropmark, the content is just a URL (not sure why).
-		// If the entire content is just a single URL, replace it with the Description
-		i.Content = i.Description
-	}
 	i.directives[DropmarkEditorURLDirectiveName] = i.DropmarkEditURL
 
 	ch <- index
