@@ -180,13 +180,18 @@ type Item struct {
 }
 
 func (i *Item) defaults(c *Collection, index int) {
+	_, contentURLErr := url.Parse(i.Content)
+	if contentURLErr == nil {
+		// Sometimes in Dropmark, the content is just a URL (not sure why).
+		// If the entire content is just a single URL, replace it with the Description
+		i.Content = i.Description
+	}
+
 	frontMatter := make(map[string]string)
 	body, haveFrontMatter, fmErr := content.ParseYAMLFrontMatter([]byte(i.Content), &frontMatter)
-	i.addError(c, fmt.Errorf("harvested Dropmark resource item %d defaults: %v %v", index, haveFrontMatter, fmErr))
 	if fmErr != nil {
 		i.addError(c, fmt.Errorf("harvested Dropmark resource item %d body front matter error: %v", index, fmErr))
 	} else if haveFrontMatter {
-		i.addError(c, fmt.Errorf("harvested Dropmark resource item %d has front matter: %+v", index, frontMatter))
 		for key, value := range frontMatter {
 			switch key {
 			case "description":
@@ -196,7 +201,6 @@ func (i *Item) defaults(c *Collection, index int) {
 			}
 		}
 		i.Content = fmt.Sprintf("%s", body)
-		i.addError(c, fmt.Errorf("harvested Dropmark resource item %d has body: %s", index, i.Content))
 	}
 }
 
