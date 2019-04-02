@@ -182,6 +182,7 @@ type Item struct {
 func (i *Item) defaults(c *Collection, index int) {
 	frontMatter := make(map[string]string)
 	body, haveFrontMatter, fmErr := content.ParseYAMLFrontMatter([]byte(i.Content), &frontMatter)
+	i.addError(c, fmt.Errorf("harvested Dropmark resource item %d defaults: %v %v", index, haveFrontMatter, fmErr))
 	if fmErr != nil {
 		i.addError(c, fmt.Errorf("harvested Dropmark resource item %d body front matter error: %v", index, fmErr))
 	} else if haveFrontMatter {
