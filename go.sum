@@ -77,6 +77,10 @@ github.com/lectio/content v0.0.0-20190401020354-c1c1d46f999a h1:qLuSB9hDAemkoH5P
 github.com/lectio/content v0.0.0-20190401020354-c1c1d46f999a/go.mod h1:Jbb9LwztDexbeqOj4Jqry2dT25P2up8QqCWoF1s0FWg=
 github.com/lectio/content v0.0.0-20190401205024-1a87bad0a327 h1:viXS4XgD/Lntv7WTYAKuqZ+PxKu2tGAzw8SNKaAxqig=
 github.com/lectio/content v0.0.0-20190401205024-1a87bad0a327/go.mod h1:Jbb9LwztDexbeqOj4Jqry2dT25P2up8QqCWoF1s0FWg=
+github.com/lectio/content v0.0.0-20190402015200-3e6ab7857b95 h1:5ooGyKMDoOCzAIJKZm19mMQpwiesbBhAv84hpD3o6Oc=
+github.com/lectio/content v0.0.0-20190402015200-3e6ab7857b95/go.mod h1:aPMZ7JR+EIgvec7oRye57holXME8JWkxhLEzJzxe72o=
+github.com/lectio/content v0.0.0-20190402021138-7b14c2b9b318 h1:Z2ef7waelkXGNDfgkOeyRaEswVI3RvaF0dod4G8jbgU=
+github.com/lectio/content v0.0.0-20190402021138-7b14c2b9b318/go.mod h1:aPMZ7JR+EIgvec7oRye57holXME8JWkxhLEzJzxe72o=
 github.com/lectio/harvester v0.0.0-20190323193611-386f8794c966 h1:mYGITnJ/9YRTsf6VglRN1ApKKtYboiZqQaWdAKvZjNk=
 github.com/lectio/harvester v0.0.0-20190323193611-386f8794c966/go.mod h1:ApOjx8MRzEjLcq0nA7kVGZHnv++F3uF7EoOWriQiRfE=
 github.com/lectio/harvester v0.0.0-20190325024938-d83e2e4eacd2 h1:0r9Q05g4aVX+OM3xiXe3K6iBoguVyeDv6P1mQGgGMRM=
@@ -189,6 +193,7 @@ golang.org/x/tools v0.0.0-20190330150233-1cd2f21070ec h1:zBrrEzFehtYA8+AGA7V6+ZK
 golang.org/x/tools v0.0.0-20190330150233-1cd2f21070ec/go.mod h1:LCzVGOaR6xXOjkQ3onu1FJEFr0SW1gC7cKk1uF8kGRs=
 golang.org/x/tools v0.0.0-20190330180304-aef51cc3777c/go.mod h1:LCzVGOaR6xXOjkQ3onu1FJEFr0SW1gC7cKk1uF8kGRs=
 golang.org/x/tools v0.0.0-20190401202758-5bca5db4cb6b/go.mod h1:LCzVGOaR6xXOjkQ3onu1FJEFr0SW1gC7cKk1uF8kGRs=
+golang.org/x/tools v0.0.0-20190401205534-4c644d7e323d/go.mod h1:LCzVGOaR6xXOjkQ3onu1FJEFr0SW1gC7cKk1uF8kGRs=
 gonum.org/v1/gonum v0.0.0-20190327053044-9996f1428eb6/go.mod h1:2ltnJ7xHfj0zHS40VVPYEAAMTa3ZGguvHGBSJeRWqE0=
 gonum.org/v1/gonum v0.0.0-20190328132403-c38fb5f9ef41 h1:3EIv67i0H+Ls68yWdl11wen7ai7GeGNqSMWaG8mHv44=
 gonum.org/v1/gonum v0.0.0-20190328132403-c38fb5f9ef41/go.mod h1:2ltnJ7xHfj0zHS40VVPYEAAMTa3ZGguvHGBSJeRWqE0=
@@ -206,12 +211,16 @@ gonum.org/v1/netlib v0.0.0-20190313105609-8cb42192e0e0/go.mod h1:wa6Ws7BG/ESfp6d
 gonum.org/v1/netlib v0.0.0-20190327185612-36a5df7c87e8/go.mod h1:1s8qPuduN1S8OkSgBbxHf/i3M3yqeI1AEN3cqptwzQs=
 gonum.org/v1/netlib v0.0.0-20190330074845-29ff885a0a02/go.mod h1:1s8qPuduN1S8OkSgBbxHf/i3M3yqeI1AEN3cqptwzQs=
 gonum.org/v1/netlib v0.0.0-20190331212654-76723241ea4e/go.mod h1:kS+toOQn6AQKjmKJ7gzohV1XkqsFehRA2FbsbkopSuQ=
+gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
+gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/cheggaaa/pb.v1 v1.0.28 h1:n1tBJnnK2r7g9OW2btFH91V92STTUevLXYFb8gy9EMk=
 gopkg.in/cheggaaa/pb.v1 v1.0.28/go.mod h1:V/YB90LKu/1FcN3WVnfiiE5oMCibMjukxqG/qStrOgw=
 gopkg.in/jdkato/prose.v2 v2.0.0-20180825173540-767a23049b9e h1:yDDVJ347kU7Ro+H2CRgKmAEbFXfHwjyPuXgVd6H+3N8=
 gopkg.in/jdkato/prose.v2 v2.0.0-20180825173540-767a23049b9e/go.mod h1:1uCyb8jSeRMeIfMJgVyxYssmCTAlxLBkueX+Iu2UilA=
 gopkg.in/neurosnap/sentences.v1 v1.0.6 h1:v7ElyP020iEZQONyLld3fHILHWOPs+ntzuQTNPkul8E=
 gopkg.in/neurosnap/sentences.v1 v1.0.6/go.mod h1:YlK+SN+fLQZj+kY3r8DkGDhDr91+S3JmTb5LSxFRQo0=
+gopkg.in/yaml.v2 v2.2.2 h1:ZCJp+EgiOT7lHqUV2J862kp8Qj64Jo6az82+3Td9dZw=
+gopkg.in/yaml.v2 v2.2.2/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
 modernc.org/cc v1.0.0/go.mod h1:1Sk4//wdnYJiUIxnW8ddKpaOJCF37yAdqYnkxUpaYxw=
 modernc.org/golex v1.0.0/go.mod h1:b/QX9oBD/LhixY6NDh+IdGv17hgB+51fET1i2kPSmvk=
 modernc.org/mathutil v1.0.0/go.mod h1:wU0vUrJsVWBZ4P6e7xtFJEhFSNsfRLJ8H458uRjg03k=

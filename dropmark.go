@@ -179,8 +179,27 @@ type Item struct {
 	directives       map[interface{}]interface{}
 }
 
+func (i *Item) defaults(c *Collection, index int) {
+	frontMatter := make(map[string]string)
+	body, haveFrontMatter, fmErr := content.ParseYAMLFrontMatter([]byte(i.Content), &frontMatter)
+	if fmErr != nil {
+		i.addError(c, fmt.Errorf("harvested Dropmark resource item %d body front matter error: %v", index, fmErr))
+	} else if haveFrontMatter {
+		for key, value := range frontMatter {
+			switch key {
+			case "description":
+				i.Description = value
+			default:
+				i.addError(c, fmt.Errorf("harvested Dropmark resource item %d body front matter key %s not handled", index, key))
+			}
+		}
+		i.Content = fmt.Sprintf("%s", body)
+	}
+}
+
 func (i *Item) init(c *Collection, index int, ch chan<- int, cleanCurationTargetRule content.CleanResourceParamsRule, ignoreCurationTargetRule content.IgnoreResourceRule,
 	followHTMLRedirect content.FollowRedirectsInCurationTargetHTMLPayload) {
+	i.defaults(c, index)
 	i.directives = make(map[interface{}]interface{})
 	i.index = index
 	i.resource = content.HarvestResource(i.Link, cleanCurationTargetRule, ignoreCurationTargetRule, followHTMLRedirect)
@@ -211,7 +230,7 @@ func (i *Item) init(c *Collection, index int, ch chan<- int, cleanCurationTarget
 	_, contentURLErr := url.Parse(i.Content)
 	if contentURLErr == nil {
 		// Sometimes in Dropmark, the content is just a URL (not sure why).
-		// If the content is just a single URL, replace it with the Description
+		// If the entire content is just a single URL, replace it with the Description
 		i.Content = i.Description
 	}
 	i.directives[DropmarkEditorURLDirectiveName] = i.DropmarkEditURL
