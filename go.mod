@@ -7,7 +7,7 @@ require (
 	github.com/fatih/color v1.7.0 // indirect
 	github.com/gostaticanalysis/analysisutil v0.0.0-20190329151158-56bca42c7635 // indirect
 	github.com/hashicorp/go-multierror v1.0.0
-	github.com/lectio/content v0.0.0-20190402021138-7b14c2b9b318
+	github.com/lectio/content v0.0.0-20190402141924-37bab0efbc22
 	github.com/lectio/harvester v0.0.0-20190330161551-53b737a7e78f
 	github.com/lectio/observe v0.0.0-20190330161145-24f6fc031cdd
 	github.com/lectio/score v0.0.0-20190401192339-5c8416c8f4e7
@@ -24,7 +24,9 @@ require (
 	golang.org/x/exp v0.0.0-20190321205749-f0864edee7f3 // indirect
 	golang.org/x/image v0.0.0-20190321063152-3fc05d484e9f // indirect
 	golang.org/x/mobile v0.0.0-20190327163128-167ebed0ec6d // indirect
+	golang.org/x/sys v0.0.0-20190402054613-e4093980e83e // indirect
 	golang.org/x/tools v0.0.0-20190401205534-4c644d7e323d // indirect
+	gonum.org/v1/gonum v0.0.0-20190402102716-30fedc02ced2 // indirect
 	gonum.org/v1/netlib v0.0.0-20190331212654-76723241ea4e // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	gopkg.in/cheggaaa/pb.v1 v1.0.28

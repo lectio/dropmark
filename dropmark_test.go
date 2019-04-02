@@ -78,7 +78,7 @@ func (suite *DropmarkSuite) TestDropmarkCollection() {
 	suite.Equal(item.Summary().Original(), "In 2013, the Food and Drug Administration (FDA) issued its first cybersecurity safety communication, followed in 2014 by final guidance. While it took the agency much longer to focus on cybersecurity than many of us would have liked, I think it struck a reasonable balance between new regulations (almost none) and guidance (in the form of nonbinding recommendations).")
 	suite.Nil(item.Errors(), "There should be no errors at the item level")
 
-	descr, nlpErr := item.Summary().FirstSentenceOfBody()
+	descr, nlpErr := item.Body().FirstSentence()
 	suite.Nil(nlpErr, "Unable to retrieve first sentence of item.Summary(): %v", nlpErr)
 	suite.Equal(descr, "In 2013, the Food and Drug Administration (FDA) issued its first cybersecurity safety communication, followed in 2014 by final guidance.")
 

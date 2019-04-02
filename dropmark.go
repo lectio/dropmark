@@ -52,9 +52,53 @@ func (s Summary) Original() string {
 	return s.original
 }
 
-// FirstSentenceOfBody uses NLP to get the first sentence of the body
-func (s Summary) FirstSentenceOfBody() (string, error) {
-	content, proseErr := prose.NewDocument(s.item.Body())
+// OpenGraphDescription uses the HarvestedResource's open graph description if available
+func (s Summary) OpenGraphDescription() (string, bool) {
+	return s.item.OpenGraphContent("description", nil)
+}
+
+// Body defines a Dropmark item's primary content in various formats
+type Body struct {
+	item               *Item
+	original           string
+	replacedByDescr    bool
+	haveFrontMatter    bool
+	frontMatter        map[interface{}]interface{}
+	withoutFrontMatter string
+}
+
+func makeBody(c *Collection, index int, item *Item) Body {
+	result := Body{}
+	result.original = item.Content
+	_, contentURLErr := url.Parse(item.Content)
+	if contentURLErr == nil {
+		// Sometimes in Dropmark, the content is just a URL (not sure why).
+		// If the entire content is just a single URL, replace it with the Description
+		result.original = item.Description
+		result.replacedByDescr = true
+	}
+
+	frontMatter := make(map[interface{}]interface{})
+	body, haveFrontMatter, fmErr := content.ParseYAMLFrontMatter([]byte(result.original), &frontMatter)
+	if fmErr != nil {
+		result.haveFrontMatter = false
+		item.addError(c, fmt.Errorf("harvested Dropmark resource item %d body front matter error: %v", index, fmErr))
+	} else if haveFrontMatter {
+		result.haveFrontMatter = true
+		result.frontMatter = frontMatter
+		result.withoutFrontMatter = fmt.Sprintf("%s", body)
+	}
+	return result
+}
+
+// Original returns the body content as supplied by Dropmark
+func (b Body) Original() string {
+	return b.original
+}
+
+// FirstSentence uses NLP to get the first sentence of the body
+func (b Body) FirstSentence() (string, error) {
+	content, proseErr := prose.NewDocument(b.WithoutFrontMatter())
 	if proseErr != nil {
 		return "", proseErr
 	}
@@ -66,9 +110,31 @@ func (s Summary) FirstSentenceOfBody() (string, error) {
 	return "", errors.New("Unable to find any sentences in the body")
 }
 
-// OpenGraphDescription uses the HarvestedResource's open graph description if available
-func (s Summary) OpenGraphDescription() (string, bool) {
-	return s.item.OpenGraphContent("description", nil)
+// WithoutFrontMatter returns either the original body or any content past the front matter (if any)
+func (b Body) WithoutFrontMatter() string {
+	if b.haveFrontMatter {
+		return b.withoutFrontMatter
+	}
+	return b.original
+}
+
+// HaveFrontMatter returns true if any front matter was found as part of the body
+func (b Body) HaveFrontMatter() bool {
+	return b.haveFrontMatter
+}
+
+// FrontMatter returns a map of key value pairs at the start of the body, if any
+func (b Body) FrontMatter() (interface{}, error) {
+	return b.frontMatter, nil
+}
+
+// FrontMatterValue returns a specific front matter value at the start of the body, if any
+func (b Body) FrontMatterValue(key interface{}) (interface{}, bool, error) {
+	if !b.haveFrontMatter {
+		return nil, false, nil
+	}
+	value, ok := b.frontMatter[key]
+	return value, ok, nil
 }
 
 // HTTPUserAgent may be passed into GetDropmarkCollection as the default HTTP User-Agent header parameter
@@ -170,6 +236,7 @@ type Item struct {
 	index            int
 	title            Title
 	summary          Summary
+	body             Body
 	targetURL        *url.URL
 	categories       []string
 	createdOn        time.Time
@@ -179,36 +246,21 @@ type Item struct {
 	directives       map[interface{}]interface{}
 }
 
-func (i *Item) defaults(c *Collection, index int) {
-	_, contentURLErr := url.Parse(i.Content)
-	if contentURLErr == nil {
-		// Sometimes in Dropmark, the content is just a URL (not sure why).
-		// If the entire content is just a single URL, replace it with the Description
-		i.Content = i.Description
-	}
-
-	frontMatter := make(map[string]string)
-	body, haveFrontMatter, fmErr := content.ParseYAMLFrontMatter([]byte(i.Content), &frontMatter)
-	if fmErr != nil {
-		i.addError(c, fmt.Errorf("harvested Dropmark resource item %d body front matter error: %v", index, fmErr))
-	} else if haveFrontMatter {
-		for key, value := range frontMatter {
-			switch key {
-			case "description":
-				i.Description = value
-			default:
-				i.addError(c, fmt.Errorf("harvested Dropmark resource item %d body front matter key %s not handled", index, key))
-			}
-			i.directives["body.frontmatter."+key] = value
-		}
-		i.Content = fmt.Sprintf("%s", body)
-	}
-}
-
 func (i *Item) init(c *Collection, index int, ch chan<- int, cleanCurationTargetRule content.CleanResourceParamsRule, ignoreCurationTargetRule content.IgnoreResourceRule,
 	followHTMLRedirect content.FollowRedirectsInCurationTargetHTMLPayload) {
 	i.directives = make(map[interface{}]interface{})
-	i.defaults(c, index)
+	i.body = makeBody(c, index, i)
+	if i.body.HaveFrontMatter() {
+		frontMatter, _ := i.body.FrontMatter()
+		for key, value := range frontMatter.(map[interface{}]interface{}) {
+			switch key {
+			case "description":
+				i.Description = value.(string)
+			default:
+				i.addError(c, fmt.Errorf("harvested Dropmark resource item %d body front matter key %s not handled", index, key))
+			}
+		}
+	}
 	i.index = index
 	i.resource = content.HarvestResource(i.Link, cleanCurationTargetRule, ignoreCurationTargetRule, followHTMLRedirect)
 	if i.resource == nil {
@@ -260,8 +312,8 @@ func (i Item) Title() content.Title {
 }
 
 // Body returns a Dropmark item's main content
-func (i Item) Body() string {
-	return i.Content
+func (i Item) Body() content.Body {
+	return i.body
 }
 
 // Summary returns a Dropmark item's title in various formats
@@ -290,8 +342,9 @@ func (i Item) Directives() (interface{}, error) {
 }
 
 // Directive returns a Dropmark item'specific annotation, pragma, or directives
-func (i Item) Directive(key interface{}) (interface{}, error) {
-	return i.directives[key], nil
+func (i Item) Directive(key interface{}) (interface{}, bool, error) {
+	value, ok := i.directives[key]
+	return value, ok, nil
 }
 
 // OpenGraphContent uses the HarvestedResource's open graph content if available
