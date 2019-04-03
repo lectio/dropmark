@@ -37,8 +37,15 @@ func (t Title) Clean() string {
 }
 
 // OpenGraphTitle uses the HarvestedResource's open graph title if available
-func (t Title) OpenGraphTitle() (string, bool) {
-	return t.item.OpenGraphContent("title", nil)
+func (t Title) OpenGraphTitle(clean bool) (string, bool) {
+	title, ok := t.item.OpenGraphContent("title", nil)
+	if ok {
+		if clean {
+			sourceNameAsSuffixRegEx.ReplaceAllString(title, "")
+		}
+		return title, true
+	}
+	return "", false
 }
 
 // Summary defines a Dropmark item's description/summary in various formats
