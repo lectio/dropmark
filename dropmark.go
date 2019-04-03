@@ -278,7 +278,8 @@ func (i *Item) init(c *Collection, index int, ch chan<- int, cleanCurationTarget
 		if isURLValid && isDestValid {
 			i.targetURL, _, _ = i.resource.GetURLs()
 		} else {
-			i.addError(c, fmt.Errorf("harvested Dropmark resource item %d link %q was not valid, isURLValid: %v, isDestValid: %v", index, i.Link, isURLValid, isDestValid))
+			isIgnored, ignoreReason := i.resource.IsIgnored()
+			i.addError(c, fmt.Errorf("harvested Dropmark resource item %d link %q was not valid, isURLValid: %v, isDestValid: %v, isIgnored: %v, reason: %v", index, i.Link, isURLValid, isDestValid, isIgnored, ignoreReason))
 			i.targetURL, _ = url.Parse(i.Link)
 		}
 	} else {
