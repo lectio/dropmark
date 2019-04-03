@@ -41,7 +41,7 @@ func (t Title) OpenGraphTitle(clean bool) (string, bool) {
 	title, ok := t.item.OpenGraphContent("title", nil)
 	if ok {
 		if clean {
-			sourceNameAsSuffixRegEx.ReplaceAllString(title, "")
+			return sourceNameAsSuffixRegEx.ReplaceAllString(title, ""), true
 		}
 		return title, true
 	}
