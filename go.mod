@@ -7,13 +7,13 @@ require (
 	github.com/fatih/color v1.7.0 // indirect
 	github.com/gostaticanalysis/analysisutil v0.0.0-20190329151158-56bca42c7635 // indirect
 	github.com/hashicorp/go-multierror v1.0.0
-	github.com/lectio/content v0.0.0-20190403210446-5a8744305359
+	github.com/lectio/content v0.0.0-20190404030805-9edf4c8b0416
 	github.com/lectio/harvester v0.0.0-20190330161551-53b737a7e78f
+	github.com/lectio/link v0.0.0-20190404030448-db9bcf71a0e3
 	github.com/lectio/observe v0.0.0-20190330161145-24f6fc031cdd
-	github.com/lectio/score v0.0.0-20190403203617-311f73f178e1
+	github.com/lectio/score v0.0.0-20190404024129-64342cf75a65
 	github.com/mattn/go-colorable v0.1.1 // indirect
 	github.com/mattn/go-isatty v0.0.7 // indirect
-	github.com/mattn/go-runewidth v0.0.4 // indirect
 	github.com/mingrammer/commonregex v1.0.0 // indirect
 	github.com/montanaflynn/stats v0.5.0 // indirect
 	github.com/opentracing/opentracing-go v1.1.0

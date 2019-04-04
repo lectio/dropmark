@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/lectio/content"
+	"github.com/lectio/link"
 	"gopkg.in/cheggaaa/pb.v1"
 	"gopkg.in/jdkato/prose.v2"
 )
@@ -158,8 +159,8 @@ type Collection struct {
 	errors      []error
 }
 
-func (c *Collection) init(cleanCurationTargetRule content.CleanResourceParamsRule, ignoreCurationTargetRule content.IgnoreResourceRule,
-	followHTMLRedirect content.FollowRedirectsInCurationTargetHTMLPayload, verbose bool) {
+func (c *Collection) init(cleanCurationTargetRule link.CleanResourceParamsRule, ignoreCurationTargetRule link.IgnoreResourceRule,
+	followHTMLRedirect link.FollowRedirectsInCurationTargetHTMLPayload, verbose bool) {
 	var bar *pb.ProgressBar
 	if verbose {
 		bar = pb.StartNew(len(c.Items))
@@ -248,13 +249,13 @@ type Item struct {
 	categories       []string
 	createdOn        time.Time
 	featuredImageURL *url.URL
-	resource         *content.HarvestedResource
+	resource         *link.Resource
 	errors           []error
 	directives       map[interface{}]interface{}
 }
 
-func (i *Item) init(c *Collection, index int, ch chan<- int, cleanCurationTargetRule content.CleanResourceParamsRule, ignoreCurationTargetRule content.IgnoreResourceRule,
-	followHTMLRedirect content.FollowRedirectsInCurationTargetHTMLPayload) {
+func (i *Item) init(c *Collection, index int, ch chan<- int, cleanCurationTargetRule link.CleanResourceParamsRule, ignoreCurationTargetRule link.IgnoreResourceRule,
+	followHTMLRedirect link.FollowRedirectsInCurationTargetHTMLPayload) {
 	i.directives = make(map[interface{}]interface{})
 	i.body = makeBody(c, index, i)
 	if i.body.HaveFrontMatter() {
@@ -269,7 +270,7 @@ func (i *Item) init(c *Collection, index int, ch chan<- int, cleanCurationTarget
 		}
 	}
 	i.index = index
-	i.resource = content.HarvestResource(i.Link, cleanCurationTargetRule, ignoreCurationTargetRule, followHTMLRedirect)
+	i.resource = link.HarvestResource(i.Link, cleanCurationTargetRule, ignoreCurationTargetRule, followHTMLRedirect)
 	if i.resource == nil {
 		i.addError(c, fmt.Errorf("unable to harvest Dropmark item %d link %q, resource came back nil", index, i.Link))
 	}
@@ -392,13 +393,13 @@ func (i Item) TwitterCardContent(twitterKey string, defaultValue *string) (strin
 }
 
 // TargetResource is the URL that Dropmark item points to
-func (i Item) TargetResource() *content.HarvestedResource {
+func (i Item) TargetResource() *link.Resource {
 	return i.resource
 }
 
 // GetDropmarkCollection takes a Dropmark apiEndpoint and creates a Collection object
-func GetDropmarkCollection(apiEndpoint string, cleanCurationTargetRule content.CleanResourceParamsRule, ignoreCurationTargetRule content.IgnoreResourceRule,
-	followHTMLRedirect content.FollowRedirectsInCurationTargetHTMLPayload, verbose bool, userAgent string, timeout time.Duration) (*Collection, error) {
+func GetDropmarkCollection(apiEndpoint string, cleanCurationTargetRule link.CleanResourceParamsRule, ignoreCurationTargetRule link.IgnoreResourceRule,
+	followHTMLRedirect link.FollowRedirectsInCurationTargetHTMLPayload, verbose bool, userAgent string, timeout time.Duration) (*Collection, error) {
 	result := new(Collection)
 	result.apiEndpoint = apiEndpoint
 
