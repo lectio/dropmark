@@ -223,7 +223,7 @@ type Tag struct {
 
 // Item represents a single Dropmark collection item after JSON unmarshalling is completed
 type Item struct {
-	Link            string      `json:"link,omitempty"`
+	DropmarkLink    string      `json:"link,omitempty"`
 	Name            string      `json:"name,omitempty"`
 	Description     string      `json:"description,omitempty"`
 	Content         string      `json:"content,omitempty"`
@@ -273,9 +273,9 @@ func (i *Item) init(c *Collection, index int, ch chan<- int, cleanCurationTarget
 		})
 	}
 	i.index = index
-	i.resource = link.HarvestResource(i.Link, cleanCurationTargetRule, ignoreCurationTargetRule, followHTMLRedirect)
+	i.resource = link.HarvestResource(i.DropmarkLink, cleanCurationTargetRule, ignoreCurationTargetRule, followHTMLRedirect)
 	if i.resource == nil {
-		i.addError(c, fmt.Errorf("unable to harvest Dropmark item %d link %q, resource came back nil", index, i.Link))
+		i.addError(c, fmt.Errorf("unable to harvest Dropmark item %d link %q, resource came back nil", index, i.DropmarkLink))
 	}
 	i.title = Title{item: i, original: i.Name}
 	i.summary = Summary{item: i, original: i.Description}
@@ -290,11 +290,11 @@ func (i *Item) init(c *Collection, index int, ch chan<- int, cleanCurationTarget
 			i.targetURL, _, _ = i.resource.GetURLs()
 		} else {
 			isIgnored, ignoreReason := i.resource.IsIgnored()
-			i.addError(c, fmt.Errorf("harvested Dropmark resource item %d link %q was not valid, isURLValid: %v, isDestValid: %v, isIgnored: %v, reason: %v", index, i.Link, isURLValid, isDestValid, isIgnored, ignoreReason))
-			i.targetURL, _ = url.Parse(i.Link)
+			i.addError(c, fmt.Errorf("harvested Dropmark resource item %d link %q was not valid, isURLValid: %v, isDestValid: %v, isIgnored: %v, reason: %v", index, i.DropmarkLink, isURLValid, isDestValid, isIgnored, ignoreReason))
+			i.targetURL, _ = url.Parse(i.DropmarkLink)
 		}
 	} else {
-		i.targetURL, _ = url.Parse(i.Link)
+		i.targetURL, _ = url.Parse(i.DropmarkLink)
 	}
 	i.createdOn, _ = time.Parse("2006-01-02 15:04:05 MST", i.CreatedAt)
 	i.featuredImageURL, _ = url.Parse(i.Thumbnails.Large)
@@ -388,8 +388,8 @@ func (i Item) TwitterCardContent(twitterKey string, defaultValue *string) (strin
 	return ir.GetTwitterMetaTag(twitterKey)
 }
 
-// TargetResource is the URL that Dropmark item points to
-func (i Item) TargetResource() *link.Resource {
+// Link is the URL that Dropmark item points to, fulfils content.CuratedContent contract
+func (i Item) Link() content.Link {
 	return i.resource
 }
 

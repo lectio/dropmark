@@ -7,11 +7,11 @@ require (
 	github.com/fatih/color v1.7.0 // indirect
 	github.com/gostaticanalysis/analysisutil v0.0.0-20190329151158-56bca42c7635 // indirect
 	github.com/hashicorp/go-multierror v1.0.0
-	github.com/lectio/content v0.0.0-20190406193530-27c7d4883911
+	github.com/lectio/content v0.0.0-20190406214654-27001d2a8792
 	github.com/lectio/flexmap v0.0.0-20190406192317-f27bf6e83979
 	github.com/lectio/frontmatter v0.0.0-20190406173607-94db504573f1
 	github.com/lectio/harvester v0.0.0-20190330161551-53b737a7e78f
-	github.com/lectio/link v0.0.0-20190404162948-74b09536610e
+	github.com/lectio/link v0.0.0-20190406215649-6f602a00a3b0
 	github.com/lectio/observe v0.0.0-20190330161145-24f6fc031cdd
 	github.com/lectio/score v0.0.0-20190406164830-03cce66f513f
 	github.com/mattn/go-colorable v0.1.1 // indirect
