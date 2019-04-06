@@ -133,8 +133,8 @@ func (b Body) WithoutFrontMatter() string {
 	return b.original
 }
 
-// HaveFrontMatter returns true if any front matter was found as part of the body
-func (b Body) HaveFrontMatter() bool {
+// HasFrontMatter returns true if any front matter was found as part of the body
+func (b Body) HasFrontMatter() bool {
 	return b.haveFrontMatter
 }
 
@@ -261,7 +261,7 @@ func (i *Item) init(c *Collection, index int, ch chan<- int, cleanCurationTarget
 	})
 
 	i.body = makeBody(c, index, i)
-	if i.body.HaveFrontMatter() {
+	if i.body.HasFrontMatter() {
 		i.body.FrontMatter().ForEachTextKey(func(key string, value interface{}) bool {
 			switch key {
 			case "description":
