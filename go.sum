@@ -103,6 +103,8 @@ github.com/lectio/content v0.0.0-20190406220637-3234f6168266 h1:ZO5jfbC1JRCLamX3
 github.com/lectio/content v0.0.0-20190406220637-3234f6168266/go.mod h1:Vys+AfwxL70BepDi60Y1eNf+cBjjbRggeMqV+cy0K8I=
 github.com/lectio/content v0.0.0-20190406223354-a71582f89ab3 h1:sXP64cs2PBUf+EdXW+9lAFJ29n4Vj2TnigM0gdVkyic=
 github.com/lectio/content v0.0.0-20190406223354-a71582f89ab3/go.mod h1:Vys+AfwxL70BepDi60Y1eNf+cBjjbRggeMqV+cy0K8I=
+github.com/lectio/content v0.0.0-20190406224309-9e3bf46c50d1 h1:zo1CsUWBKs0E7PdaMR/3dRVrevu1kZaSPFB7m5/AxfI=
+github.com/lectio/content v0.0.0-20190406224309-9e3bf46c50d1/go.mod h1:Vys+AfwxL70BepDi60Y1eNf+cBjjbRggeMqV+cy0K8I=
 github.com/lectio/flexmap v0.0.0-20190406172322-8e39b97d9184 h1:srnFRgX8QKwZQUVaTWW8Xl2jEHLUgZmvS7iTiscwqn4=
 github.com/lectio/flexmap v0.0.0-20190406172322-8e39b97d9184/go.mod h1:kZu10qSo5aEjCxvTS4+fVHlirwTvQ9vp+shAp282bWQ=
 github.com/lectio/flexmap v0.0.0-20190406181817-9acd03bc3313 h1:GVLgWjJMQ0fHSWQsg+W7OiOEBcpfTG4e5MDeCGPpYBw=

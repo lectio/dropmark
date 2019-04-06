@@ -189,16 +189,16 @@ func (c Collection) Source() string {
 }
 
 // Content returns Dropmark items as a content collection
-func (c Collection) Content() []content.Content {
+func (c Collection) Content() ([]content.Content, error) {
 	result := make([]content.Content, len(c.Items))
 	for i := 0; i < len(c.Items); i++ {
 		result[i] = c.Items[i]
 	}
-	return result
+	return result, nil
 }
 
 // FilteredContent returns Dropmark items where the keep function returns true
-func (c Collection) FilteredContent(keep func(c content.Content) bool) []content.Content {
+func (c Collection) FilteredContent(keep func(c content.Content) bool) ([]content.Content, error) {
 	var result []content.Content
 	for i := 0; i < len(c.Items); i++ {
 		item := c.Items[i]
@@ -206,7 +206,7 @@ func (c Collection) FilteredContent(keep func(c content.Content) bool) []content
 			result = append(result, item)
 		}
 	}
-	return result
+	return result, nil
 }
 
 func (c *Collection) addError(err error) {
