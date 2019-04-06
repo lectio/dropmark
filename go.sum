@@ -97,6 +97,12 @@ github.com/lectio/content v0.0.0-20190406193530-27c7d4883911 h1:suws2r6ZE2QnCnCK
 github.com/lectio/content v0.0.0-20190406193530-27c7d4883911/go.mod h1:PXs9BJz9Ynsf+2NhjAU3ITEl0cqREByDKSouEf8RwH0=
 github.com/lectio/content v0.0.0-20190406214654-27001d2a8792 h1:nzQVLR43OXt1SROcozwLwapVhK0+7Yoje2eutZ3sWdo=
 github.com/lectio/content v0.0.0-20190406214654-27001d2a8792/go.mod h1:Vys+AfwxL70BepDi60Y1eNf+cBjjbRggeMqV+cy0K8I=
+github.com/lectio/content v0.0.0-20190406220050-1869b97ee15d h1:VKVuqTI8xlXZT/hStXffbx5CqLFcI9ybzF966POBP5k=
+github.com/lectio/content v0.0.0-20190406220050-1869b97ee15d/go.mod h1:Vys+AfwxL70BepDi60Y1eNf+cBjjbRggeMqV+cy0K8I=
+github.com/lectio/content v0.0.0-20190406220637-3234f6168266 h1:ZO5jfbC1JRCLamX34Wjn6sHyBidatx1CUDs/jDjUZX0=
+github.com/lectio/content v0.0.0-20190406220637-3234f6168266/go.mod h1:Vys+AfwxL70BepDi60Y1eNf+cBjjbRggeMqV+cy0K8I=
+github.com/lectio/content v0.0.0-20190406223354-a71582f89ab3 h1:sXP64cs2PBUf+EdXW+9lAFJ29n4Vj2TnigM0gdVkyic=
+github.com/lectio/content v0.0.0-20190406223354-a71582f89ab3/go.mod h1:Vys+AfwxL70BepDi60Y1eNf+cBjjbRggeMqV+cy0K8I=
 github.com/lectio/flexmap v0.0.0-20190406172322-8e39b97d9184 h1:srnFRgX8QKwZQUVaTWW8Xl2jEHLUgZmvS7iTiscwqn4=
 github.com/lectio/flexmap v0.0.0-20190406172322-8e39b97d9184/go.mod h1:kZu10qSo5aEjCxvTS4+fVHlirwTvQ9vp+shAp282bWQ=
 github.com/lectio/flexmap v0.0.0-20190406181817-9acd03bc3313 h1:GVLgWjJMQ0fHSWQsg+W7OiOEBcpfTG4e5MDeCGPpYBw=
@@ -131,6 +137,8 @@ github.com/lectio/link v0.0.0-20190406194311-db01e9b20eef h1:rUsrBpdkv0RpEWySNld
 github.com/lectio/link v0.0.0-20190406194311-db01e9b20eef/go.mod h1:A/gV147io7QYmpyV3fVGVfpgrLNU0q3WJ/xveH51Y3U=
 github.com/lectio/link v0.0.0-20190406215649-6f602a00a3b0 h1:I/NEk7peukAV38o/ipAV+XfAZEsafBD2OIFaEn+fsTk=
 github.com/lectio/link v0.0.0-20190406215649-6f602a00a3b0/go.mod h1:A/gV147io7QYmpyV3fVGVfpgrLNU0q3WJ/xveH51Y3U=
+github.com/lectio/link v0.0.0-20190406220816-48740b712f7f h1:lsEJdoxHiRYYUW5IDqCp85dKqLkZd647tG/mPP8SCfU=
+github.com/lectio/link v0.0.0-20190406220816-48740b712f7f/go.mod h1:A/gV147io7QYmpyV3fVGVfpgrLNU0q3WJ/xveH51Y3U=
 github.com/lectio/observe v0.0.0-20190330161145-24f6fc031cdd h1:Tj3xxsz9XYOw/BaCE7dYFOlwhMlGYJNu3BH9cPBhsw8=
 github.com/lectio/observe v0.0.0-20190330161145-24f6fc031cdd/go.mod h1:U70gz4MZji5a71zVhxqnnip4ca5Tjwn64Ev9NeqGPmc=
 github.com/lectio/score v0.0.0-20190322201605-d948d123c684 h1:N2AWEUa/t2I2bgOXTqAptjimiiMH2y0EW30yf5cZnpg=
