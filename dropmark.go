@@ -11,6 +11,8 @@ import (
 	"time"
 
 	"github.com/lectio/content"
+	"github.com/lectio/flexmap"
+	"github.com/lectio/frontmatter"
 	"github.com/lectio/link"
 	"gopkg.in/cheggaaa/pb.v1"
 	"gopkg.in/jdkato/prose.v2"
@@ -71,7 +73,7 @@ type Body struct {
 	original           string
 	replacedByDescr    bool
 	haveFrontMatter    bool
-	frontMatter        map[interface{}]interface{}
+	frontMatter        flexmap.TextKeyMap
 	withoutFrontMatter string
 }
 
@@ -86,8 +88,13 @@ func makeBody(c *Collection, index int, item *Item) Body {
 		result.replacedByDescr = true
 	}
 
-	frontMatter := make(map[interface{}]interface{})
-	body, haveFrontMatter, fmErr := content.ParseYAMLFrontMatter([]byte(result.original), &frontMatter)
+	var body []byte
+	var haveFrontMatter bool
+	frontMatter, fmErr := flexmap.MakeCustomTextKeyMap(func(v interface{}) error {
+		var fmErr error
+		body, haveFrontMatter, fmErr = frontmatter.ParseYAMLFrontMatter([]byte(result.original), v)
+		return fmErr
+	})
 	if fmErr != nil {
 		result.haveFrontMatter = false
 		item.addError(c, fmt.Errorf("harvested Dropmark resource item %d body front matter error: %v", index, fmErr))
@@ -132,17 +139,8 @@ func (b Body) HaveFrontMatter() bool {
 }
 
 // FrontMatter returns a map of key value pairs at the start of the body, if any
-func (b Body) FrontMatter() (interface{}, error) {
-	return b.frontMatter, nil
-}
-
-// FrontMatterValue returns a specific front matter value at the start of the body, if any
-func (b Body) FrontMatterValue(key interface{}) (interface{}, bool, error) {
-	if !b.haveFrontMatter {
-		return nil, false, nil
-	}
-	value, ok := b.frontMatter[key]
-	return value, ok, nil
+func (b Body) FrontMatter() flexmap.TextKeyMap {
+	return b.frontMatter
 }
 
 // HTTPUserAgent may be passed into GetDropmarkCollection as the default HTTP User-Agent header parameter
@@ -251,23 +249,28 @@ type Item struct {
 	featuredImageURL *url.URL
 	resource         *link.Resource
 	errors           []error
-	directives       map[interface{}]interface{}
+	directives       flexmap.Map
 }
 
 func (i *Item) init(c *Collection, index int, ch chan<- int, cleanCurationTargetRule link.CleanResourceParamsRule, ignoreCurationTargetRule link.IgnoreResourceRule,
 	followHTMLRedirect link.FollowRedirectsInCurationTargetHTMLPayload) {
-	i.directives = make(map[interface{}]interface{})
+	i.directives, _ = flexmap.MakeTextKeyMapWithDefaults(func() (startIndex int, endIndex int, iteratorFn func(index int) (flexmap.Item, bool)) {
+		return 0, 0, func(index int) (flexmap.Item, bool) {
+			return flexmap.MakeItem(DropmarkEditorURLDirectiveName, i.DropmarkEditURL), false
+		}
+	})
+
 	i.body = makeBody(c, index, i)
 	if i.body.HaveFrontMatter() {
-		frontMatter, _ := i.body.FrontMatter()
-		for key, value := range frontMatter.(map[interface{}]interface{}) {
+		i.body.FrontMatter().ForEachTextKey(func(key string, value interface{}) bool {
 			switch key {
 			case "description":
 				i.Description = value.(string)
 			default:
 				i.addError(c, fmt.Errorf("harvested Dropmark resource item %d body front matter key %s not handled", index, key))
 			}
-		}
+			return true
+		})
 	}
 	i.index = index
 	i.resource = link.HarvestResource(i.Link, cleanCurationTargetRule, ignoreCurationTargetRule, followHTMLRedirect)
@@ -295,7 +298,6 @@ func (i *Item) init(c *Collection, index int, ch chan<- int, cleanCurationTarget
 	}
 	i.createdOn, _ = time.Parse("2006-01-02 15:04:05 MST", i.CreatedAt)
 	i.featuredImageURL, _ = url.Parse(i.Thumbnails.Large)
-	i.directives[DropmarkEditorURLDirectiveName] = i.DropmarkEditURL
 
 	ch <- index
 }
@@ -346,14 +348,8 @@ func (i Item) FeaturedImage() *url.URL {
 }
 
 // Directives returns a Dropmark item's annotations, pragmas, and directives
-func (i Item) Directives() (interface{}, error) {
-	return i.directives, nil
-}
-
-// Directive returns a Dropmark item'specific annotation, pragma, or directives
-func (i Item) Directive(key interface{}) (interface{}, bool, error) {
-	value, ok := i.directives[key]
-	return value, ok, nil
+func (i Item) Directives() flexmap.Map {
+	return i.directives
 }
 
 // OpenGraphContent uses the HarvestedResource's open graph content if available
