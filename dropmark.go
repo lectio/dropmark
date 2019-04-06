@@ -197,23 +197,6 @@ func (c Collection) Content() ([]content.Content, error) {
 	return result, nil
 }
 
-// FilteredContent returns Dropmark items where the keep function returns true
-func (c Collection) FilteredContent(keep func(index int, c content.Content) (bool, error)) ([]content.Content, []error) {
-	var result []content.Content
-	var errList []error
-	for i := 0; i < len(c.Items); i++ {
-		item := c.Items[i]
-		ok, keepErr := keep(i, item)
-		if ok {
-			result = append(result, item)
-		}
-		if keepErr != nil {
-			errList = append(errList, keepErr)
-		}
-	}
-	return result, errList
-}
-
 func (c *Collection) addError(err error) {
 	c.errors = append(c.errors, err)
 }
