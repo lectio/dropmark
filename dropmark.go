@@ -224,6 +224,20 @@ func (c Collection) FilterInvalidItems() content.CollectionFilterResults {
 	})
 }
 
+// LinksIterator returns an iterator which loops through the Links and returns the URLs and unique keys
+func (c Collection) LinksIterator() func() (int, int, func(index int) (*url.URL, string, error)) {
+	return func() (int, int, func(index int) (*url.URL, string, error)) {
+		return 0, len(c.Items) - 1, func(index int) (*url.URL, string, error) {
+			item := c.Items[index]
+			url, urlErr := item.Link().FinalURL()
+			if urlErr != nil {
+				return url, item.Keys().GloballyUniqueKey(), urlErr
+			}
+			return url, item.Keys().GloballyUniqueKey(), nil
+		}
+	}
+}
+
 // Thumbnails represents a group of images
 type Thumbnails struct {
 	Mini      string `json:"mini,omitempty"`
