@@ -206,6 +206,24 @@ func (c Collection) Errors() []error {
 	return c.errors
 }
 
+// FilterInvalidItems removes all invalid items
+func (c Collection) FilterInvalidItems() content.CollectionFilterResults {
+	return content.FilterCollection("Remove invalid items", c, func() (int, int, content.CollectionFilterItemFn) {
+		return 0, len(c.Items) - 1, func(index int) (content.Content, bool, error) {
+			item := c.Items[index]
+			curatedLink := item.Link()
+			if curatedLink == nil {
+				return item, false, fmt.Errorf("filtering item %d: v.Link() is nil", index)
+			}
+			_, finalURLErr := curatedLink.FinalURL()
+			if finalURLErr != nil {
+				return item, false, fmt.Errorf("filtering item %d: %v", index, finalURLErr)
+			}
+			return item, true, nil
+		}
+	})
+}
+
 // Thumbnails represents a group of images
 type Thumbnails struct {
 	Mini      string `json:"mini,omitempty"`
