@@ -2,8 +2,8 @@ package dropmark
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -14,9 +14,22 @@ import (
 	"github.com/lectio/flexmap"
 	"github.com/lectio/frontmatter"
 	"github.com/lectio/link"
-	"gopkg.in/cheggaaa/pb.v1"
-	"gopkg.in/jdkato/prose.v2"
 )
+
+// ProgressReporter is sent to this package's methods if activity progress reporting is expected
+type ProgressReporter interface {
+	IsProgressReportingRequested() bool
+	StartReportableActivity(expectedItems int)
+	StartReportableReaderActivityInBytes(exepectedBytes int64, inputReader io.Reader) io.Reader
+	IncrementReportableActivityProgress()
+	IncrementReportableActivityProgressBy(incrementBy int)
+	CompleteReportableActivityProgress(summary string)
+}
+
+// NaturalLanguageProcessor is the interface we use to do NLP extractions
+type NaturalLanguageProcessor interface {
+	FirstSentence(source string) (string, error)
+}
 
 // DropmarkEditorURLDirectiveName is the content.Content.Directive() key for the editor URL
 const DropmarkEditorURLDirectiveName = "editorURL"
@@ -69,6 +82,7 @@ func (s Summary) OpenGraphDescription() (string, bool) {
 
 // Body defines a Dropmark item's primary content in various formats
 type Body struct {
+	nlp                NaturalLanguageProcessor
 	item               *Item
 	original           string
 	replacedByDescr    bool
@@ -80,6 +94,7 @@ type Body struct {
 func makeBody(c *Collection, index int, item *Item) Body {
 	result := Body{}
 	result.original = item.Content
+	result.nlp = c.nlp
 	_, contentURLErr := url.Parse(item.Content)
 	if contentURLErr == nil {
 		// Sometimes in Dropmark, the content is just a URL (not sure why).
@@ -113,16 +128,7 @@ func (b Body) Original() string {
 
 // FirstSentence uses NLP to get the first sentence of the body
 func (b Body) FirstSentence() (string, error) {
-	content, proseErr := prose.NewDocument(b.WithoutFrontMatter())
-	if proseErr != nil {
-		return "", proseErr
-	}
-
-	sentences := content.Sentences()
-	if len(sentences) > 0 {
-		return sentences[0].Text, nil
-	}
-	return "", errors.New("Unable to find any sentences in the body")
+	return b.nlp.FirstSentence(b.WithoutFrontMatter())
 }
 
 // WithoutFrontMatter returns either the original body or any content past the front matter (if any)
@@ -154,15 +160,14 @@ type Collection struct {
 	Name        string  `json:"name,omitempty"`
 	Items       []*Item `json:"items,omitempty"`
 	apiEndpoint string
+	nlp         NaturalLanguageProcessor
 	errors      []error
 }
 
 func (c *Collection) init(cleanCurationTargetRule link.CleanResourceParamsRule, ignoreCurationTargetRule link.IgnoreResourceRule,
-	followHTMLRedirect link.FollowRedirectsInCurationTargetHTMLPayload, verbose bool) {
-	var bar *pb.ProgressBar
-	if verbose {
-		bar = pb.StartNew(len(c.Items))
-		bar.ShowCounters = true
+	followHTMLRedirect link.FollowRedirectsInCurationTargetHTMLPayload, pr ProgressReporter) {
+	if pr != nil && pr.IsProgressReportingRequested() {
+		pr.StartReportableActivity(len(c.Items))
 	}
 	ch := make(chan int)
 	if c.Items != nil {
@@ -173,13 +178,13 @@ func (c *Collection) init(cleanCurationTargetRule link.CleanResourceParamsRule, 
 
 	for i := 0; i < len(c.Items); i++ {
 		_ = <-ch
-		if verbose {
-			bar.Increment()
+		if pr != nil && pr.IsProgressReportingRequested() {
+			pr.IncrementReportableActivityProgress()
 		}
 	}
 
-	if verbose {
-		bar.FinishPrint(fmt.Sprintf("Completed parsing %d Dropmark items from %q", len(c.Items), c.apiEndpoint))
+	if pr != nil && pr.IsProgressReportingRequested() {
+		pr.CompleteReportableActivityProgress(fmt.Sprintf("Completed parsing %d Dropmark items from %q", len(c.Items), c.apiEndpoint))
 	}
 }
 
@@ -412,10 +417,11 @@ func (i Item) Link() content.Link {
 }
 
 // GetDropmarkCollection takes a Dropmark apiEndpoint and creates a Collection object
-func GetDropmarkCollection(apiEndpoint string, cleanCurationTargetRule link.CleanResourceParamsRule, ignoreCurationTargetRule link.IgnoreResourceRule,
-	followHTMLRedirect link.FollowRedirectsInCurationTargetHTMLPayload, verbose bool, userAgent string, timeout time.Duration) (*Collection, error) {
+func GetDropmarkCollection(apiEndpoint string, nlp NaturalLanguageProcessor, cleanCurationTargetRule link.CleanResourceParamsRule, ignoreCurationTargetRule link.IgnoreResourceRule,
+	followHTMLRedirect link.FollowRedirectsInCurationTargetHTMLPayload, pr ProgressReporter, userAgent string, timeout time.Duration) (*Collection, error) {
 	result := new(Collection)
 	result.apiEndpoint = apiEndpoint
+	result.nlp = nlp
 
 	httpClient := http.Client{
 		Timeout: timeout,
@@ -433,12 +439,10 @@ func GetDropmarkCollection(apiEndpoint string, cleanCurationTargetRule link.Clea
 
 	var body []byte
 	var readErr error
-	if verbose {
-		bar := pb.New(int(resp.ContentLength)).SetUnits(pb.U_BYTES)
-		bar.Start()
-		reader := bar.NewProxyReader(resp.Body)
+	if pr != nil && pr.IsProgressReportingRequested() {
+		reader := pr.StartReportableReaderActivityInBytes(resp.ContentLength, resp.Body)
 		body, readErr = ioutil.ReadAll(reader)
-		bar.FinishPrint(fmt.Sprintf("Completed Dropmark API request %q", apiEndpoint))
+		pr.CompleteReportableActivityProgress(fmt.Sprintf("Completed Dropmark API request %q", apiEndpoint))
 	} else {
 		body, readErr = ioutil.ReadAll(resp.Body)
 	}
@@ -448,6 +452,6 @@ func GetDropmarkCollection(apiEndpoint string, cleanCurationTargetRule link.Clea
 	}
 
 	json.Unmarshal(body, result)
-	result.init(cleanCurationTargetRule, ignoreCurationTargetRule, followHTMLRedirect, verbose)
+	result.init(cleanCurationTargetRule, ignoreCurationTargetRule, followHTMLRedirect, pr)
 	return result, nil
 }

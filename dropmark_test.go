@@ -50,8 +50,13 @@ func (suite *DropmarkSuite) SetupSuite() {
 func (suite *DropmarkSuite) TearDownSuite() {
 }
 
+func (suite *DropmarkSuite) FirstSentence(source string) (string, error) {
+	simpleSentenceRegExp := regexp.MustCompile(`^(.*?)[.?!]`)
+	return simpleSentenceRegExp.FindString(source), nil
+}
+
 func (suite *DropmarkSuite) TestDropmarkCollection() {
-	collection, getErr := GetDropmarkCollection("https://shah.dropmark.com/652682.json", defaultCleanURLsRegExList, defaultIgnoreURLsRegExList, true, false, HTTPUserAgent, HTTPTimeout)
+	collection, getErr := GetDropmarkCollection("https://shah.dropmark.com/652682.json", suite, defaultCleanURLsRegExList, defaultIgnoreURLsRegExList, true, nil, HTTPUserAgent, HTTPTimeout)
 	suite.Nil(getErr, "Unable to retrieve Dropmark collection from %q: %v.", collection.apiEndpoint, getErr)
 	suite.Nil(collection.Errors(), "There should be no errors at the collection level")
 	suite.Equal(len(collection.Items), 4)
