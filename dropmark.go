@@ -263,8 +263,6 @@ type Item struct {
 	DropmarkEditURL string      `json:"url"`
 
 	index            int
-	title            Title
-	summary          Summary
 	body             Body
 	targetURL        *url.URL
 	categories       []string
@@ -300,8 +298,6 @@ func (i *Item) init(c *Collection, index int, ch chan<- int, cleanCurationTarget
 	if i.resource == nil {
 		i.addError(c, fmt.Errorf("unable to harvest Dropmark item %d link %q, resource came back nil", index, i.DropmarkLink))
 	}
-	i.title = Title{item: i, original: i.Name}
-	i.summary = Summary{item: i, original: i.Description}
 	i.categories = make([]string, len(i.Tags))
 	for t := 0; t < len(i.Tags); t++ {
 		i.categories[t] = i.Tags[t].Name
@@ -336,13 +332,13 @@ func (i Item) Errors() []error {
 }
 
 // Keys returns a Dropmark item's different keys
-func (i Item) Keys() content.Keys {
-	return i.resource
-}
+// func (i Item) Keys() content.Keys {
+// 	return i.resource
+// }
 
 // Title returns a Dropmark item's title in various formats
-func (i Item) Title() content.Title {
-	return i.title
+func (i Item) Title() string {
+	return i.Name
 }
 
 // Body returns a Dropmark item's main content
@@ -351,8 +347,8 @@ func (i Item) Body() content.Body {
 }
 
 // Summary returns a Dropmark item's title in various formats
-func (i Item) Summary() content.Summary {
-	return i.summary
+func (i Item) Summary() string {
+	return i.Description
 }
 
 // Categories returns a Dropmark item's tags
