@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -27,12 +28,18 @@ type Collection struct {
 	Name        string  `json:"name,omitempty"`
 	Items       []*Item `json:"items,omitempty"`
 	apiEndpoint string
-	errors      []error
 }
 
 // Source returns the Dropmark API endpoint which created the collection
 func (c Collection) Source() string {
 	return c.apiEndpoint
+}
+
+// Tidy cleans up some of the problems in the source items
+func (c *Collection) tidy() {
+	for i, item := range c.Items {
+		item.tidy(i)
+	}
 }
 
 // Thumbnails represents a group of images
@@ -67,6 +74,18 @@ type Item struct {
 	UserEmail       string      `json:"user_email,omitempty"`
 	UserAvatarURL   *Thumbnails `json:"user_avatar,omitempty"`
 	DropmarkEditURL string      `json:"url"`
+
+	edits []string
+}
+
+func (i *Item) tidy(index int) {
+	_, contentURLErr := url.Parse(i.Content)
+	if contentURLErr == nil {
+		// Sometimes in Dropmark, the content is just a URL (not sure why).
+		// If the entire content is just a single URL, replace it with the Description
+		i.edits = append(i.edits, fmt.Sprintf("Item[%d].Content was a URL %q, replaced with Description", index, i.Content))
+		i.Content = i.Description
+	}
 }
 
 // GetCollection takes a Dropmark apiEndpoint and creates a Collection object
@@ -103,5 +122,6 @@ func GetCollection(apiEndpoint string, pr ProgressReporter, userAgent string, ti
 	}
 
 	json.Unmarshal(body, result)
+	result.tidy()
 	return result, nil
 }
