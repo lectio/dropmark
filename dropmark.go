@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -85,6 +86,11 @@ func (i *Item) tidy(index int) {
 		// If the entire content is just a single URL, replace it with the Description
 		i.edits = append(i.edits, fmt.Sprintf("Item[%d].Content was a URL %q, replaced with Description", index, i.Content))
 		i.Content = i.Description
+	}
+
+	if strings.Compare(i.Content, i.Description) == 0 {
+		i.edits = append(i.edits, fmt.Sprintf("Item[%d].Content was the same as the Description, set Description to blank", index))
+		i.Description = ""
 	}
 }
 
