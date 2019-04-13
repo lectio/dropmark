@@ -118,7 +118,6 @@ func GetCollection(apiEndpoint string, pr ProgressReporter, userAgent string, ti
 	if pr != nil && pr.IsProgressReportingRequested() {
 		reader := pr.StartReportableReaderActivityInBytes(resp.ContentLength, resp.Body)
 		body, readErr = ioutil.ReadAll(reader)
-		pr.CompleteReportableActivityProgress(fmt.Sprintf("Completed Dropmark API request %q", apiEndpoint))
 	} else {
 		body, readErr = ioutil.ReadAll(resp.Body)
 	}
@@ -129,5 +128,10 @@ func GetCollection(apiEndpoint string, pr ProgressReporter, userAgent string, ti
 
 	json.Unmarshal(body, result)
 	result.tidy()
+
+	if pr != nil && pr.IsProgressReportingRequested() {
+		pr.CompleteReportableActivityProgress(fmt.Sprintf("Completed Dropmark API request %q with %d items", apiEndpoint, len(result.Items)))
+	}
+
 	return result, nil
 }
