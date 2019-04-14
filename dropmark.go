@@ -136,6 +136,10 @@ func GetCollection(apiEndpoint string, pr ProgressReporter, userAgent string, ti
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("Dropmark API %q status is not OK: %v", apiEndpoint, resp.StatusCode)
+	}
+
 	var body []byte
 	var readErr error
 	if pr != nil && pr.IsProgressReportingRequested() {

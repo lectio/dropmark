@@ -42,6 +42,11 @@ func (suite *DropmarkSuite) TestContent() {
 	suite.Equal(3, len(items))
 }
 
+func (suite *DropmarkSuite) TestInvalid() {
+	_, getErr := GetCollection("https://sha.dropmark.com/652682.json", nil, HTTPUserAgent, HTTPTimeout)
+	suite.NotNil(getErr, "Should be an error", getErr)
+}
+
 func TestSuite(t *testing.T) {
 	suite.Run(t, new(DropmarkSuite))
 }
