@@ -31,6 +31,15 @@ type Collection struct {
 	apiEndpoint string
 }
 
+// Content satisfies the general Lectio interface for retrieving a single piece of content from a list
+func (c Collection) Content() (count int, itemFn func(index int) interface{}) {
+	count = len(c.Items)
+	itemFn = func(index int) interface{} {
+		return c.Items[index]
+	}
+	return
+}
+
 // Source returns the Dropmark API endpoint which created the collection
 func (c Collection) Source() string {
 	return c.apiEndpoint
@@ -77,6 +86,11 @@ type Item struct {
 	DropmarkEditURL string      `json:"url"`
 
 	edits []string
+}
+
+// TargetURL satisfies the contract for a Lectio Link object
+func (i Item) TargetURL() string {
+	return i.Link
 }
 
 func (i *Item) tidy(index int) {
