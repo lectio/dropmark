@@ -32,10 +32,10 @@ type Collection struct {
 }
 
 // Content satisfies the general Lectio interface for retrieving a single piece of content from a list
-func (c Collection) Content() (count int, itemFn func(index int) interface{}) {
+func (c Collection) Content() (count int, itemFn func(index int) (interface{}, error), err error) {
 	count = len(c.Items)
-	itemFn = func(index int) interface{} {
-		return c.Items[index]
+	itemFn = func(index int) (interface{}, error) {
+		return c.Items[index], nil
 	}
 	return
 }
