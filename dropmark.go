@@ -26,9 +26,11 @@ const HTTPTimeout = time.Second * 90
 
 // Collection is the object returned from the Dropmark API calls after JSON unmarshalling is completed
 type Collection struct {
-	Name        string  `json:"name,omitempty"`
-	Items       []*Item `json:"items,omitempty"`
+	Name  string  `json:"name,omitempty"`
+	Items []*Item `json:"items,omitempty"`
+
 	apiEndpoint string
+	issues      []Issue `json:"issues"`
 }
 
 // Content satisfies the general Lectio interface for retrieving a single piece of content from a list
@@ -52,6 +54,42 @@ func (c Collection) Content() (count int, itemFn func(startIndex, endIndex int) 
 // Source returns the Dropmark API endpoint which created the collection
 func (c Collection) Source() string {
 	return c.apiEndpoint
+}
+
+// Issues contains the problems in this link plus satisfies the Link.Issues interface
+func (c Collection) Issues() []Issue {
+	return c.issues
+}
+
+// IssueCounts returns the total, errors, and warnings counts
+func (c Collection) IssueCounts() (uint, uint, uint) {
+	if c.issues == nil {
+		return 0, 0, 0
+	}
+	var errors, warnings uint
+	for _, i := range c.issues {
+		if i.IsError() {
+			errors++
+		} else {
+			warnings++
+		}
+	}
+	return uint(len(c.issues)), errors, warnings
+}
+
+// HandleIssues loops through each issue and calls a particular handler
+func (c Collection) HandleIssues(errorHandler func(Issue), warningHandler func(Issue)) {
+	if c.issues == nil {
+		return
+	}
+	for _, i := range c.issues {
+		if i.IsError() && errorHandler != nil {
+			errorHandler(i)
+		}
+		if i.IsWarning() && warningHandler != nil {
+			warningHandler(i)
+		}
+	}
 }
 
 // Tidy cleans up some of the problems in the source items
@@ -118,7 +156,7 @@ func (i *Item) tidy(index int) {
 }
 
 // GetCollection takes a Dropmark apiEndpoint and creates a Collection object
-func GetCollection(apiEndpoint string, pr ProgressReporter, userAgent string, timeout time.Duration) (*Collection, error) {
+func GetCollection(apiEndpoint string, pr ProgressReporter, userAgent string, timeout time.Duration) (*Collection, Issues) {
 	result := new(Collection)
 	result.apiEndpoint = apiEndpoint
 
@@ -127,17 +165,20 @@ func GetCollection(apiEndpoint string, pr ProgressReporter, userAgent string, ti
 	}
 	req, reqErr := http.NewRequest(http.MethodGet, apiEndpoint, nil)
 	if reqErr != nil {
-		return nil, fmt.Errorf("Unable to create request %q: %v", apiEndpoint, reqErr)
+		result.issues = append(result.issues, newIssue(apiEndpoint, UnableToCreateHTTPRequest, fmt.Sprintf("Unable to create HTTP request: %v", reqErr), true))
+		return nil, result
 	}
 	req.Header.Set("User-Agent", userAgent)
 	resp, getErr := httpClient.Do(req)
 	if getErr != nil {
-		return nil, fmt.Errorf("Unable to execute GET request %q: %v", apiEndpoint, getErr)
+		result.issues = append(result.issues, newIssue(apiEndpoint, UnableToExecuteHTTPGETRequest, fmt.Sprintf("Unable to execute HTTP GET request: %v", getErr), true))
+		return nil, result
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("Dropmark API %q status is not OK: %v", apiEndpoint, resp.StatusCode)
+		result.issues = append(result.issues, newIssue(apiEndpoint, InvalidAPIRespHTTPStatusCode, fmt.Sprintf("Dropmark API status is not HTTP OK (200): %v", resp.StatusCode), true))
+		return nil, result
 	}
 
 	var body []byte
@@ -150,7 +191,8 @@ func GetCollection(apiEndpoint string, pr ProgressReporter, userAgent string, ti
 	}
 
 	if readErr != nil {
-		return nil, fmt.Errorf("Unable to read body from request %q: %v", apiEndpoint, readErr)
+		result.issues = append(result.issues, newIssue(apiEndpoint, UnableToReadBodyFromHTTPResponse, fmt.Sprintf("Unable to read body from HTTP response: %v", readErr), true))
+		return nil, result
 	}
 
 	json.Unmarshal(body, result)
