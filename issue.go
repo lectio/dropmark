@@ -21,7 +21,7 @@ type Issue interface {
 
 // Issues packages multiple issues into a container
 type Issues interface {
-	Issues() []Issue
+	ErrorsAndWarnings() []Issue
 	IssueCounts() (uint, uint, uint)
 	HandleIssues(errorHandler func(Issue), warningHandler func(Issue))
 }

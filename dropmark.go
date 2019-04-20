@@ -56,8 +56,8 @@ func (c Collection) Source() string {
 	return c.apiEndpoint
 }
 
-// Issues contains the problems in this link plus satisfies the Link.Issues interface
-func (c Collection) Issues() []Issue {
+// ErrorsAndWarnings contains the problems in this link plus satisfies the Link.Issues interface
+func (c Collection) ErrorsAndWarnings() []Issue {
 	return c.issues
 }
 
