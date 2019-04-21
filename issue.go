@@ -1,18 +1,16 @@
 package dropmark
 
-type IssueCode string
-
 const (
-	UnableToCreateHTTPRequest        IssueCode = "DROPMARKAPIE-0100"
-	UnableToExecuteHTTPGETRequest    IssueCode = "DROPMARKAPIE-0200"
-	InvalidAPIRespHTTPStatusCode     IssueCode = "DROPMARKAPIE-0300"
-	UnableToReadBodyFromHTTPResponse IssueCode = "DROPMARKAPIE-0400"
+	UnableToCreateHTTPRequest        string = "DROPMARKAPIE-0100"
+	UnableToExecuteHTTPGETRequest    string = "DROPMARKAPIE-0200"
+	InvalidAPIRespHTTPStatusCode     string = "DROPMARKAPIE-0300"
+	UnableToReadBodyFromHTTPResponse string = "DROPMARKAPIE-0400"
 )
 
 // Issue is a structured problem identification with context information
 type Issue interface {
 	IssueContext() interface{} // this will be the Dropmark API, it's kept generic so it doesn't require package dependency
-	IssueCode() IssueCode      // useful to uniquely identify a particular code
+	IssueCode() string      // useful to uniquely identify a particular code
 	Issue() string             // the
 
 	IsError() bool   // this issue is an error
@@ -28,13 +26,13 @@ type Issues interface {
 
 type issue struct {
 	apiEndpoint string
-	code        IssueCode
+	code        string
 	message     string
 	isError     bool
 	children    []Issue
 }
 
-func newIssue(apiEndpoint string, code IssueCode, message string, isError bool) Issue {
+func newIssue(apiEndpoint string, code string, message string, isError bool) Issue {
 	result := new(issue)
 	result.apiEndpoint = apiEndpoint
 	result.code = code
@@ -47,7 +45,7 @@ func (i issue) IssueContext() interface{} {
 	return i.apiEndpoint
 }
 
-func (i issue) IssueCode() IssueCode {
+func (i issue) IssueCode() string {
 	return i.code
 }
 
