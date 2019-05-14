@@ -29,7 +29,7 @@ type Collection struct {
 	Items []*Item `json:"items,omitempty"`
 
 	apiEndpoint string
-	issues      []Issue `json:"issues"`
+	issues      []Issue
 }
 
 // Content satisfies the general Lectio interface for retrieving a single piece of content from a list
@@ -115,6 +115,10 @@ type Tag struct {
 
 // Item represents a single Dropmark collection item after JSON unmarshalling is completed
 type Item struct {
+	ID              string      `json:"id"`
+	IsURL           bool        `json:"is_url"`
+	Type            string      `json:"type"`
+	MIME            string      `json:"mime"`
 	Link            string      `json:"link,omitempty"`
 	Name            string      `json:"name,omitempty"`
 	Description     string      `json:"description,omitempty"`
@@ -122,6 +126,7 @@ type Item struct {
 	Tags            []*Tag      `json:"tags,omitempty"`
 	CreatedAt       string      `json:"created_at,omitempty"`
 	UpdatedAt       string      `json:"updated_at,omitempty"`
+	DeletedAt       string      `json:"deleted_at,omitempty"`
 	ThumbnailURL    string      `json:"thumbnail,omitempty"`
 	Thumbnails      *Thumbnails `json:"thumbnails,omitempty"`
 	UserID          string      `json:"user_id,omitempty"`
@@ -134,9 +139,14 @@ type Item struct {
 	edits []string
 }
 
-// TargetURL satisfies the contract for a Lectio Link object
-func (i Item) TargetURL() string {
+// OriginalURL satisfies the contract for a Lectio link.Link object
+func (i Item) OriginalURL() string {
 	return i.Link
+}
+
+// FinalURL satisfies the contract for a Lectio link.Link object.
+func (i Item) FinalURL() (*url.URL, error) {
+	return url.Parse(i.Link)
 }
 
 func (i *Item) tidy(index int) {
@@ -152,6 +162,11 @@ func (i *Item) tidy(index int) {
 		i.edits = append(i.edits, fmt.Sprintf("Item[%d].Content was the same as the Description, set Description to blank", index))
 		i.Description = ""
 	}
+}
+
+// Edits returns a list of messages indicating what edits, if any were performed on the Dropmark URLs
+func (i *Item) Edits() []string {
+	return i.edits
 }
 
 // GetCollection takes a Dropmark apiEndpoint and creates a Collection object
