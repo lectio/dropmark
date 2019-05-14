@@ -13,8 +13,7 @@ import (
 
 // ProgressReporter is sent to this package's methods if activity progress reporting is expected
 type ProgressReporter interface {
-	IsProgressReportingRequested() bool
-	StartReportableReaderActivityInBytes(exepectedBytes int64, inputReader io.Reader) io.Reader
+	StartReportableReaderActivityInBytes(summary string, exepectedBytes int64, inputReader io.Reader) io.Reader
 	CompleteReportableActivityProgress(summary string)
 }
 
@@ -183,12 +182,8 @@ func GetCollection(apiEndpoint string, pr ProgressReporter, userAgent string, ti
 
 	var body []byte
 	var readErr error
-	if pr != nil && pr.IsProgressReportingRequested() {
-		reader := pr.StartReportableReaderActivityInBytes(resp.ContentLength, resp.Body)
-		body, readErr = ioutil.ReadAll(reader)
-	} else {
-		body, readErr = ioutil.ReadAll(resp.Body)
-	}
+	reader := pr.StartReportableReaderActivityInBytes(fmt.Sprintf("Processing Dropmark API request %q (%d bytes)", apiEndpoint, resp.ContentLength), resp.ContentLength, resp.Body)
+	body, readErr = ioutil.ReadAll(reader)
 
 	if readErr != nil {
 		result.issues = append(result.issues, newIssue(apiEndpoint, UnableToReadBodyFromHTTPResponse, fmt.Sprintf("Unable to read body from HTTP response: %v", readErr), true))
@@ -198,9 +193,7 @@ func GetCollection(apiEndpoint string, pr ProgressReporter, userAgent string, ti
 	json.Unmarshal(body, result)
 	result.tidy()
 
-	if pr != nil && pr.IsProgressReportingRequested() {
-		pr.CompleteReportableActivityProgress(fmt.Sprintf("Completed Dropmark API request %q with %d items", apiEndpoint, len(result.Items)))
-	}
+	pr.CompleteReportableActivityProgress(fmt.Sprintf("Completed Dropmark API request %q with %d items", apiEndpoint, len(result.Items)))
 
 	return result, nil
 }

@@ -1,6 +1,7 @@
 package dropmark
 
 import (
+	"io"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -16,14 +17,22 @@ func (suite *DropmarkSuite) SetupSuite() {
 func (suite *DropmarkSuite) TearDownSuite() {
 }
 
+func (suite *DropmarkSuite) StartReportableReaderActivityInBytes(summary string, exepectedBytes int64, inputReader io.Reader) io.Reader {
+	return inputReader
+}
+
+func (suite *DropmarkSuite) CompleteReportableActivityProgress(summary string) {
+
+}
+
 func (suite *DropmarkSuite) TestDropmarkCollection() {
-	collection, getErr := GetCollection("https://shah.dropmark.com/652682.json", nil, HTTPUserAgent, HTTPTimeout)
+	collection, getErr := GetCollection("https://shah.dropmark.com/652682.json", suite, HTTPUserAgent, HTTPTimeout)
 	suite.Nil(getErr, "Unable to retrieve Dropmark collection from %q: %v.", collection.apiEndpoint, getErr)
 	suite.Equal(len(collection.Items), 4)
 }
 
 func (suite *DropmarkSuite) TestContent() {
-	collection, getErr := GetCollection("https://shah.dropmark.com/652682.json", nil, HTTPUserAgent, HTTPTimeout)
+	collection, getErr := GetCollection("https://shah.dropmark.com/652682.json", suite, HTTPUserAgent, HTTPTimeout)
 	suite.Nil(getErr, "Unable to retrieve Dropmark collection from %q: %v.", collection.apiEndpoint, getErr)
 	count, getItemFn, contentErr := collection.Content()
 	suite.Nil(contentErr, "Unable to get Dropmark content iterator from %q: %v.", collection.apiEndpoint, contentErr)
@@ -43,7 +52,7 @@ func (suite *DropmarkSuite) TestContent() {
 }
 
 func (suite *DropmarkSuite) TestInvalid() {
-	_, getErr := GetCollection("https://sha.dropmark.com/652682.json", nil, HTTPUserAgent, HTTPTimeout)
+	_, getErr := GetCollection("https://sha.dropmark.com/652682.json", suite, HTTPUserAgent, HTTPTimeout)
 	suite.NotNil(getErr, "Should be an error", getErr)
 }
 
