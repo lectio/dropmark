@@ -1,7 +1,9 @@
 package dropmark
 
 import (
+	"context"
 	"fmt"
+	"github.com/lectio/link"
 	"net/url"
 	"strings"
 )
@@ -30,7 +32,7 @@ type Item struct {
 	Link            string      `json:"link,omitempty"`
 	Name            string      `json:"name,omitempty"`
 	Description     string      `json:"description,omitempty"`
-	Content         string      `json:"content,omitempty"`
+	RawContent      string      `json:"content,omitempty"`
 	Tags            []*Tag      `json:"tags,omitempty"`
 	CreatedAt       string      `json:"created_at,omitempty"`
 	UpdatedAt       string      `json:"updated_at,omitempty"`
@@ -44,35 +46,112 @@ type Item struct {
 	UserAvatarURL   *Thumbnails `json:"user_avatar,omitempty"`
 	DropmarkEditURL string      `json:"url"`
 
-	edits []string
+	index              uint
+	edits              []string
+	linkTraversed      bool
+	linkTraversable    bool
+	traversedLink      link.Link
+	linkTraversalError error
+
+	finalized bool
 }
 
 // OriginalURL satisfies the contract for a Lectio link.Link object
-func (i *Item) OriginalURL() string {
+func (i *Item) OriginalURL(ctx context.Context, options ...interface{}) string {
 	return i.Link
 }
 
 // FinalURL satisfies the contract for a Lectio link.Link object
-func (i *Item) FinalURL() (*url.URL, error) {
-	return url.Parse(i.Link)
+func (i *Item) FinalURL(ctx context.Context, options ...interface{}) (*url.URL, error) {
+	if i.linkTraversed && i.linkTraversable {
+		return i.traversedLink.FinalURL()
+	}
+	return url.Parse(i.OriginalURL(ctx, options...))
 }
 
-// Edits returns a list of messages indicating what edits, if any were performed on the Dropmark URLs
-func (i *Item) Edits() []string {
-	return i.edits
+// TraversedLink satisfies the contract for a Lectio Content interface
+func (i *Item) TraversedLink(ctx context.Context, options ...interface{}) (bool, bool, link.Link, error) {
+	return i.linkTraversable, i.linkTraversed, i.traversedLink, i.linkTraversalError
 }
 
-func (i *Item) tidy(index int) {
-	_, contentURLErr := url.Parse(i.Content)
+func (i *Item) isTraversable(ctx context.Context, warn func(code, message string)) bool {
+	if len(i.DeletedAt) > 0 {
+		warn("DMIWARN-001-ITEMDELETED", "Item marked as deleted, not traversable")
+		return false
+	}
+
+	if i.Type != "link" {
+		warn("DMIWARN-002-ITEMNOTLINK", fmt.Sprintf("Item 'type' is %q not 'link', not traversable", i.Type))
+		return false
+	}
+
+	if len(strings.TrimSpace(i.Link)) == 0 {
+		warn("DMIWARN-003-LINKEMPTY", "Empty link, not traversable")
+		return false
+	}
+
+	return true
+}
+
+// TraversedLink satisfies the contract for a Lectio Content interface
+func (i *Item) traverseLink(ctx context.Context, traversable func(item *Item) bool, traverse func(item *Item) (link.Link, error)) {
+	if i.linkTraversed {
+		return
+	}
+
+	i.linkTraversable = traversable(i)
+	if i.linkTraversable {
+		i.traversedLink, i.linkTraversalError = traverse(i)
+	}
+	i.linkTraversed = true
+}
+
+// Title satisfies the contract for a Lectio Content interface
+func (i *Item) Title(ctx context.Context, options ...interface{}) string {
+	return i.Name
+}
+
+// Summary satisfies the contract for a Lectio Content interface
+func (i *Item) Summary(ctx context.Context, options ...interface{}) string {
+	return i.Description
+}
+
+// Content satisfies the contract for a Lectio Content interface
+func (i *Item) Content(ctx context.Context, options ...interface{}) string {
+	return i.RawContent
+}
+
+// FeaturedImageURL satisfies the contract for a Lectio Content interface
+func (i *Item) FeaturedImageURL(ctx context.Context, options ...interface{}) string {
+	return i.ThumbnailURL
+}
+
+func (i *Item) finalize(ctx context.Context, tidyInstance tidyHandler, index uint) {
+	if i.finalized {
+		return
+	}
+
+	i.index = index
+
+	onTidy := func(tidy string) {
+		i.edits = append(i.edits, tidy)
+		if tidyInstance != nil {
+			tidyInstance.OnTidy(ctx, tidy)
+		}
+	}
+
+	_, contentURLErr := url.Parse(i.RawContent)
 	if contentURLErr == nil {
 		// Sometimes in Dropmark, the content is just a URL (not sure why).
 		// If the entire content is just a single URL, replace it with the Description
-		i.edits = append(i.edits, fmt.Sprintf("Item[%d].Content was a URL %q, replaced with Description", index, i.Content))
-		i.Content = i.Description
+		onTidy(fmt.Sprintf("Item[%d].Content was a URL %q, replaced with Description", index, i.RawContent))
+		i.RawContent = i.Description
 	}
 
-	if strings.Compare(i.Content, i.Description) == 0 {
-		i.edits = append(i.edits, fmt.Sprintf("Item[%d].Content was the same as the Description, set Description to blank", index))
+	if strings.Compare(i.RawContent, i.Description) == 0 {
+		onTidy(fmt.Sprintf("Item[%d].Content was the same as the Description, set Description to blank", index))
 		i.Description = ""
 	}
+
+	i.finalized = true
 }

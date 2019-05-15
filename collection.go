@@ -6,11 +6,35 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"sync"
 	"time"
+
+	"github.com/lectio/link"
 )
 
-type prepareHTTPRequest interface {
+type httpRequestPreparer interface {
 	OnPrepareHTTPRequest(ctx context.Context, client *http.Client, req *http.Request)
+}
+
+type linkTraverser interface {
+	IsURLTraversable(ctx context.Context, originalURL string, suggested bool, warn func(code, message string), options ...interface{}) bool
+	TraverseLink(ctx context.Context, originalURL string, options ...interface{}) (link.Link, error)
+}
+
+type errorTracker interface {
+	OnError(ctx context.Context, code string, err error)
+}
+
+type warningTracker interface {
+	OnWarning(ctx context.Context, code string, message string)
+}
+
+type tidyHandler interface {
+	OnTidy(ctx context.Context, tidy string)
+}
+
+type isAsynchRequested interface {
+	IsAsynchRequested(ctx context.Context) bool
 }
 
 // Collection is the object returned from the Dropmark API calls after JSON unmarshalling is completed
@@ -18,11 +42,31 @@ type Collection struct {
 	Name  string  `json:"name,omitempty"`
 	Items []*Item `json:"items,omitempty"`
 
-	apiEndpoint     string
-	client          *http.Client
-	prepReqInstance prepareHTTPRequest
-	prepReqFunc     func(ctx context.Context, client *http.Client, req *http.Request)
-	pr              ReaderProgressReporter
+	apiEndpoint    string
+	client         *http.Client
+	reqPreparer    httpRequestPreparer
+	prepReqFunc    func(ctx context.Context, client *http.Client, req *http.Request)
+	rpr            ReaderProgressReporter
+	bpr            BoundedProgressReporter
+	tidyHandler    tidyHandler
+	errorTracker   errorTracker
+	warningTracker warningTracker
+
+	asynch           bool
+	traverseLinks    bool
+	linkTraverser    linkTraverser
+	traverseLinkFunc func(ctx context.Context, originalURL string, options ...interface{}) (link.Link, error)
+}
+
+// ForEach satisfies the Lectio bounded content collection interface
+func (c *Collection) ForEach(ctx context.Context, handler func(ctx context.Context, index uint, content interface{}, total uint) bool, options ...interface{}) {
+	count := uint(len(c.Items))
+	for index, content := range c.Items {
+		ok := handler(ctx, uint(index), content, count)
+		if !ok {
+			break
+		}
+	}
 }
 
 // Content satisfies the general Lectio interface for retrieving a single piece of content from a list
@@ -53,18 +97,18 @@ func (c Collection) ContentAPIEndpoint() string {
 	return c.apiEndpoint
 }
 
-// Tidy cleans up some of the problems in the source items
-func (c *Collection) tidy() {
-	for i, item := range c.Items {
-		item.tidy(i)
-	}
-}
-
 func (c *Collection) initOptions(ctx context.Context, apiEndpoint string, options ...interface{}) {
 	c.apiEndpoint = apiEndpoint
-	c.pr = defaultProgressReporter
+	c.rpr = defaultProgressReporter
+	c.bpr = defaultProgressReporter
 
 	for _, option := range options {
+		if v, ok := option.(errorTracker); ok {
+			c.errorTracker = v
+		}
+		if v, ok := option.(warningTracker); ok {
+			c.warningTracker = v
+		}
 		if v, ok := option.(interface {
 			HTTPClient(ctx context.Context) *http.Client
 		}); ok {
@@ -73,15 +117,35 @@ func (c *Collection) initOptions(ctx context.Context, apiEndpoint string, option
 		if v, ok := option.(func(ctx context.Context) *http.Client); ok {
 			c.client = v(ctx)
 		}
-		if v, ok := option.(prepareHTTPRequest); ok {
-			c.prepReqInstance = v
+		if v, ok := option.(httpRequestPreparer); ok {
+			c.reqPreparer = v
 		}
 		if v, ok := option.(func(ctx context.Context, client *http.Client, req *http.Request)); ok {
 			c.prepReqFunc = v
 		}
 		if v, ok := option.(ReaderProgressReporter); ok {
-			c.pr = v
+			c.rpr = v
 		}
+		if v, ok := option.(BoundedProgressReporter); ok {
+			c.bpr = v
+		}
+		if v, ok := option.(tidyHandler); ok {
+			c.tidyHandler = v
+		}
+		if v, ok := option.(linkTraverser); ok {
+			c.linkTraverser = v
+			c.traverseLinks = true
+		}
+		if v, ok := option.(func(ctx context.Context, originalURL string, options ...interface{}) (link.Link, error)); ok {
+			c.traverseLinkFunc = v
+			c.traverseLinks = true
+		}
+		if v, ok := option.(isAsynchRequested); ok {
+			c.asynch = v.IsAsynchRequested(ctx)
+		}
+		// if v, ok := option.(*struct{ ID string }); ok {
+		// 	c.tidyInstance = v.ID
+		// }
 	}
 
 	if c.client == nil {
@@ -92,8 +156,8 @@ func (c *Collection) initOptions(ctx context.Context, apiEndpoint string, option
 }
 
 func (c *Collection) prepareHTTPRequest(ctx context.Context, req *http.Request) {
-	if c.prepReqInstance != nil {
-		c.prepReqInstance.OnPrepareHTTPRequest(ctx, c.client, req)
+	if c.reqPreparer != nil {
+		c.reqPreparer.OnPrepareHTTPRequest(ctx, c.client, req)
 	}
 
 	if c.prepReqFunc != nil {
@@ -101,10 +165,79 @@ func (c *Collection) prepareHTTPRequest(ctx context.Context, req *http.Request) 
 	}
 }
 
-// GetCollection takes a Dropmark apiEndpoint and creates a Collection object
-func GetCollection(ctx context.Context, apiEndpoint string, options ...interface{}) (*Collection, error) {
+func (c *Collection) finalize(ctx context.Context) {
+	warnItem := func(item *Item, code, message string) {
+		if c.warningTracker != nil {
+			c.warningTracker.OnWarning(ctx, code, fmt.Sprintf("%s (item %d)", message, item.index))
+		}
+	}
+
+	var linkTraversable func(item *Item) bool
+	var traverseLink func(item *Item) (link.Link, error)
+	if c.linkTraverser != nil {
+		linkTraversable = func(item *Item) bool {
+			suggested := !item.isTraversable(ctx, func(code, message string) {
+				warnItem(item, code, message)
+			})
+			return c.linkTraverser.IsURLTraversable(ctx, item.OriginalURL(ctx), suggested,
+				func(code, message string) {
+					warnItem(item, code, message)
+				})
+		}
+		traverseLink = func(item *Item) (link.Link, error) {
+			return c.linkTraverser.TraverseLink(ctx, item.OriginalURL(ctx))
+		}
+	} else if c.traverseLinkFunc != nil {
+		linkTraversable = func(item *Item) bool {
+			return item.isTraversable(ctx, func(code, message string) {
+				warnItem(item, code, message)
+			})
+		}
+		traverseLink = func(item *Item) (link.Link, error) {
+			return c.traverseLinkFunc(ctx, item.OriginalURL(ctx))
+		}
+	}
+
+	finalizeItem := func(ctx context.Context, index uint, item *Item) {
+		item.finalize(ctx, c.tidyHandler, index)
+		if c.traverseLinks {
+			item.traverseLink(ctx, linkTraversable, traverseLink)
+		}
+	}
+
+	itemsCount := len(c.Items)
+	c.bpr.StartReportableActivity(ctx, fmt.Sprintf("Importing %d Dropmark Links from %q", itemsCount, c.apiEndpoint), itemsCount)
+	if c.asynch {
+		var wg sync.WaitGroup
+		queue := make(chan int)
+		for index, item := range c.Items {
+			wg.Add(1)
+			go func(index int, item *Item) {
+				defer wg.Done()
+				finalizeItem(ctx, uint(index), item)
+				queue <- index
+			}(index, item)
+		}
+		go func() {
+			defer close(queue)
+			wg.Wait()
+		}()
+		for range queue {
+			c.bpr.IncrementReportableActivityProgress(ctx)
+		}
+	} else {
+		for index, item := range c.Items {
+			finalizeItem(ctx, uint(index), item)
+			c.bpr.IncrementReportableActivityProgress(ctx)
+		}
+	}
+	c.bpr.CompleteReportableActivityProgress(ctx, fmt.Sprintf("Imported %d Dropmark Links from %q", itemsCount, c.apiEndpoint))
+}
+
+// ImportCollection takes a Dropmark apiEndpoint and creates a Collection object
+func ImportCollection(ctx context.Context, apiEndpoint string, options ...interface{}) (*Collection, error) {
 	result := new(Collection)
-	result.initOptions(ctx, apiEndpoint, options)
+	result.initOptions(ctx, apiEndpoint, options...)
 
 	req, reqErr := http.NewRequest(http.MethodGet, apiEndpoint, nil)
 	if reqErr != nil {
@@ -125,7 +258,7 @@ func GetCollection(ctx context.Context, apiEndpoint string, options ...interface
 
 	var body []byte
 	var readErr error
-	reader := result.pr.StartReportableReaderActivityInBytes(fmt.Sprintf("Processing Dropmark API request %q (%d bytes)", apiEndpoint, resp.ContentLength), resp.ContentLength, resp.Body)
+	reader := result.rpr.StartReportableReaderActivityInBytes(ctx, fmt.Sprintf("Processing Dropmark API request %q (%d bytes)", apiEndpoint, resp.ContentLength), resp.ContentLength, resp.Body)
 	body, readErr = ioutil.ReadAll(reader)
 
 	if readErr != nil {
@@ -133,9 +266,9 @@ func GetCollection(ctx context.Context, apiEndpoint string, options ...interface
 	}
 
 	json.Unmarshal(body, result)
-	result.tidy()
+	result.rpr.CompleteReportableActivityProgress(ctx, fmt.Sprintf("Completed Dropmark API request %q with %d items", apiEndpoint, len(result.Items)))
 
-	result.pr.CompleteReportableActivityProgress(fmt.Sprintf("Completed Dropmark API request %q with %d items", apiEndpoint, len(result.Items)))
+	result.finalize(ctx)
 
 	return result, nil
 }
