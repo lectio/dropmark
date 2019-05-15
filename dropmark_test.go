@@ -22,7 +22,7 @@ func (suite *DropmarkSuite) SetupSuite() {
 func (suite *DropmarkSuite) TearDownSuite() {
 }
 
-func (suite *DropmarkSuite) HTTPClient() *http.Client {
+func (suite *DropmarkSuite) HTTPClient(ctx context.Context) *http.Client {
 	return suite.httpClient
 }
 

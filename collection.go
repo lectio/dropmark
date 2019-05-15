@@ -9,12 +9,20 @@ import (
 	"time"
 )
 
+type prepareHTTPRequest interface {
+	OnPrepareHTTPRequest(ctx context.Context, client *http.Client, req *http.Request)
+}
+
 // Collection is the object returned from the Dropmark API calls after JSON unmarshalling is completed
 type Collection struct {
 	Name  string  `json:"name,omitempty"`
 	Items []*Item `json:"items,omitempty"`
 
-	apiEndpoint string
+	apiEndpoint     string
+	client          *http.Client
+	prepReqInstance prepareHTTPRequest
+	prepReqFunc     func(ctx context.Context, client *http.Client, req *http.Request)
+	pr              ReaderProgressReporter
 }
 
 // Content satisfies the general Lectio interface for retrieving a single piece of content from a list
@@ -52,47 +60,60 @@ func (c *Collection) tidy() {
 	}
 }
 
-// GetCollection takes a Dropmark apiEndpoint and creates a Collection object
-func GetCollection(ctx context.Context, apiEndpoint string, options ...interface{}) (*Collection, error) {
-	result := new(Collection)
-	result.apiEndpoint = apiEndpoint
-
-	var client *http.Client
-	var pr ReaderProgressReporter = defaultProgressReporter
-
-	type prepareHTTPRequest interface {
-		OnPrepareHTTPRequest(ctx context.Context, client *http.Client, req *http.Request)
-	}
-	var preReqOption prepareHTTPRequest
+func (c *Collection) initOptions(ctx context.Context, apiEndpoint string, options ...interface{}) {
+	c.apiEndpoint = apiEndpoint
+	c.pr = defaultProgressReporter
 
 	for _, option := range options {
-		if v, ok := option.(interface{ HTTPClient() *http.Client }); ok {
-			client = v.HTTPClient()
+		if v, ok := option.(interface {
+			HTTPClient(ctx context.Context) *http.Client
+		}); ok {
+			c.client = v.HTTPClient(ctx)
+		}
+		if v, ok := option.(func(ctx context.Context) *http.Client); ok {
+			c.client = v(ctx)
 		}
 		if v, ok := option.(prepareHTTPRequest); ok {
-			preReqOption = v
+			c.prepReqInstance = v
+		}
+		if v, ok := option.(func(ctx context.Context, client *http.Client, req *http.Request)); ok {
+			c.prepReqFunc = v
 		}
 		if v, ok := option.(ReaderProgressReporter); ok {
-			pr = v
+			c.pr = v
 		}
 	}
 
-	if client == nil {
-		client = &http.Client{
+	if c.client == nil {
+		c.client = &http.Client{
 			Timeout: time.Second * 90,
 		}
 	}
+}
+
+func (c *Collection) prepareHTTPRequest(ctx context.Context, req *http.Request) {
+	if c.prepReqInstance != nil {
+		c.prepReqInstance.OnPrepareHTTPRequest(ctx, c.client, req)
+	}
+
+	if c.prepReqFunc != nil {
+		c.prepReqFunc(ctx, c.client, req)
+	}
+}
+
+// GetCollection takes a Dropmark apiEndpoint and creates a Collection object
+func GetCollection(ctx context.Context, apiEndpoint string, options ...interface{}) (*Collection, error) {
+	result := new(Collection)
+	result.initOptions(ctx, apiEndpoint, options)
 
 	req, reqErr := http.NewRequest(http.MethodGet, apiEndpoint, nil)
 	if reqErr != nil {
 		return nil, fmt.Errorf("Unable to create HTTP request: %v", reqErr)
 	}
 
-	if preReqOption != nil {
-		preReqOption.OnPrepareHTTPRequest(ctx, client, req)
-	}
+	result.prepareHTTPRequest(ctx, req)
 
-	resp, getErr := client.Do(req)
+	resp, getErr := result.client.Do(req)
 	if getErr != nil {
 		return nil, fmt.Errorf("Unable to execute HTTP GET request: %v", getErr)
 	}
@@ -104,7 +125,7 @@ func GetCollection(ctx context.Context, apiEndpoint string, options ...interface
 
 	var body []byte
 	var readErr error
-	reader := pr.StartReportableReaderActivityInBytes(fmt.Sprintf("Processing Dropmark API request %q (%d bytes)", apiEndpoint, resp.ContentLength), resp.ContentLength, resp.Body)
+	reader := result.pr.StartReportableReaderActivityInBytes(fmt.Sprintf("Processing Dropmark API request %q (%d bytes)", apiEndpoint, resp.ContentLength), resp.ContentLength, resp.Body)
 	body, readErr = ioutil.ReadAll(reader)
 
 	if readErr != nil {
@@ -114,7 +135,7 @@ func GetCollection(ctx context.Context, apiEndpoint string, options ...interface
 	json.Unmarshal(body, result)
 	result.tidy()
 
-	pr.CompleteReportableActivityProgress(fmt.Sprintf("Completed Dropmark API request %q with %d items", apiEndpoint, len(result.Items)))
+	result.pr.CompleteReportableActivityProgress(fmt.Sprintf("Completed Dropmark API request %q with %d items", apiEndpoint, len(result.Items)))
 
 	return result, nil
 }
