@@ -26,7 +26,7 @@ func (suite *DropmarkSuite) HTTPClient() *http.Client {
 	return suite.httpClient
 }
 
-func (suite *DropmarkSuite) OnPrepareHTTPRequest(client *http.Client, req *http.Request) {
+func (suite *DropmarkSuite) OnPrepareHTTPRequest(ctx context.Context, client *http.Client, req *http.Request) {
 	req.Header.Set("User-Agent", "github.com/lectio/dropmark.DropmarkSuite")
 }
 

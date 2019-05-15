@@ -35,8 +35,13 @@ func (c Collection) Content() (count int, itemFn func(startIndex, endIndex int) 
 	return
 }
 
-// Source returns the Dropmark API endpoint which created the collection
-func (c Collection) Source() string {
+// ContentSourceName returns name of the Dropmark API source
+func (c Collection) ContentSourceName() string {
+	return "Dropmark"
+}
+
+// ContentAPIEndpoint returns the Dropmark API endpoint which created the collection
+func (c Collection) ContentAPIEndpoint() string {
 	return c.apiEndpoint
 }
 
@@ -56,7 +61,7 @@ func GetCollection(ctx context.Context, apiEndpoint string, options ...interface
 	var pr ReaderProgressReporter = defaultProgressReporter
 
 	type prepareHTTPRequest interface {
-		OnPrepareHTTPRequest(client *http.Client, req *http.Request)
+		OnPrepareHTTPRequest(ctx context.Context, client *http.Client, req *http.Request)
 	}
 	var preReqOption prepareHTTPRequest
 
@@ -84,7 +89,7 @@ func GetCollection(ctx context.Context, apiEndpoint string, options ...interface
 	}
 
 	if preReqOption != nil {
-		preReqOption.OnPrepareHTTPRequest(client, req)
+		preReqOption.OnPrepareHTTPRequest(ctx, client, req)
 	}
 
 	resp, getErr := client.Do(req)
