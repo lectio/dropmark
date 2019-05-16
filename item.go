@@ -25,28 +25,28 @@ type Tag struct {
 
 // Item represents a single Dropmark collection item after JSON unmarshalling is completed
 type Item struct {
-	ID              string      `json:"id"`
-	IsURL           bool        `json:"is_url"`
-	Type            string      `json:"type"`
-	MIME            string      `json:"mime"`
-	Link            string      `json:"link,omitempty"`
-	Name            string      `json:"name,omitempty"`
-	Description     string      `json:"description,omitempty"`
-	RawContent      string      `json:"content,omitempty"`
-	Tags            []*Tag      `json:"tags,omitempty"`
-	CreatedAt       string      `json:"created_at,omitempty"`
-	UpdatedAt       string      `json:"updated_at,omitempty"`
-	DeletedAt       string      `json:"deleted_at,omitempty"`
-	ThumbnailURL    string      `json:"thumbnail,omitempty"`
-	Thumbnails      *Thumbnails `json:"thumbnails,omitempty"`
-	UserID          string      `json:"user_id,omitempty"`
-	UserNameShort   string      `json:"username,omitempty"`
-	UserNameLong    string      `json:"user_name,omitempty"`
-	UserEmail       string      `json:"user_email,omitempty"`
-	UserAvatarURL   *Thumbnails `json:"user_avatar,omitempty"`
-	DropmarkEditURL string      `json:"url"`
+	Index           uint        `json:"index_in_collection"`   // injected by Lectio in finalize()
+	ID              string      `json:"id"`                    // from Dropmark API
+	IsURL           bool        `json:"is_url"`                // from Dropmark API
+	Type            string      `json:"type"`                  // from Dropmark API
+	MIME            string      `json:"mime"`                  // from Dropmark API
+	Link            string      `json:"link,omitempty"`        // from Dropmark API
+	Name            string      `json:"name,omitempty"`        // from Dropmark API
+	Description     string      `json:"description,omitempty"` // from Dropmark API
+	RawContent      string      `json:"content,omitempty"`     // from Dropmark API
+	Tags            []*Tag      `json:"tags,omitempty"`        // from Dropmark API
+	CreatedAt       string      `json:"created_at,omitempty"`  // from Dropmark API
+	UpdatedAt       string      `json:"updated_at,omitempty"`  // from Dropmark API
+	DeletedAt       string      `json:"deleted_at,omitempty"`  // from Dropmark API
+	ThumbnailURL    string      `json:"thumbnail,omitempty"`   // from Dropmark API
+	Thumbnails      *Thumbnails `json:"thumbnails,omitempty"`  // from Dropmark API
+	UserID          string      `json:"user_id,omitempty"`     // from Dropmark API
+	UserNameShort   string      `json:"username,omitempty"`    // from Dropmark API
+	UserNameLong    string      `json:"user_name,omitempty"`   // from Dropmark API
+	UserEmail       string      `json:"user_email,omitempty"`  // from Dropmark API
+	UserAvatarURL   *Thumbnails `json:"user_avatar,omitempty"` // from Dropmark API
+	DropmarkEditURL string      `json:"url"`                   // from Dropmark API
 
-	index              uint
 	edits              []string
 	linkTraversed      bool
 	linkTraversable    bool
@@ -131,7 +131,7 @@ func (i *Item) finalize(ctx context.Context, tidyInstance tidyHandler, index uin
 		return
 	}
 
-	i.index = index
+	i.Index = index
 
 	onTidy := func(tidy string) {
 		i.edits = append(i.edits, tidy)

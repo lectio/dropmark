@@ -168,7 +168,7 @@ func (c *Collection) prepareHTTPRequest(ctx context.Context, req *http.Request) 
 func (c *Collection) finalize(ctx context.Context) {
 	warnItem := func(item *Item, code, message string) {
 		if c.warningTracker != nil {
-			c.warningTracker.OnWarning(ctx, code, fmt.Sprintf("%s (item %d)", message, item.index))
+			c.warningTracker.OnWarning(ctx, code, fmt.Sprintf("%s (item %d)", message, item.Index))
 		}
 	}
 
