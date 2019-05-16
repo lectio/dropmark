@@ -59,13 +59,24 @@ type Collection struct {
 }
 
 // ForEach satisfies the Lectio bounded content collection interface
-func (c *Collection) ForEach(ctx context.Context, handler func(ctx context.Context, index uint, content interface{}, total uint) bool, options ...interface{}) {
+func (c *Collection) ForEach(ctx context.Context, before func(ctx context.Context, total uint), itemHandler func(ctx context.Context, index uint, item interface{}, total uint) bool, after func(ctx context.Context, handled, total uint), options ...interface{}) {
 	count := uint(len(c.Items))
+	var handled uint
+
+	if before != nil {
+		before(ctx, count)
+	}
+
 	for index, content := range c.Items {
-		ok := handler(ctx, uint(index), content, count)
+		ok := itemHandler(ctx, uint(index), content, count)
 		if !ok {
 			break
 		}
+		handled++
+	}
+
+	if after != nil {
+		after(ctx, handled, count)
 	}
 }
 
