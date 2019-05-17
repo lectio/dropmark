@@ -16,11 +16,6 @@ type httpRequestPreparer interface {
 	OnPrepareHTTPRequest(ctx context.Context, client *http.Client, req *http.Request)
 }
 
-type linkTraverser interface {
-	IsURLTraversable(ctx context.Context, originalURL string, suggested bool, warn func(code, message string), options ...interface{}) bool
-	TraverseLink(ctx context.Context, originalURL string, options ...interface{}) (link.Link, error)
-}
-
 type errorTracker interface {
 	OnError(ctx context.Context, code string, err error)
 }
@@ -52,10 +47,9 @@ type Collection struct {
 	errorTracker   errorTracker
 	warningTracker warningTracker
 
-	asynch           bool
-	traverseLinks    bool
-	linkTraverser    linkTraverser
-	traverseLinkFunc func(ctx context.Context, originalURL string, options ...interface{}) (link.Link, error)
+	asynch        bool
+	traverseLinks bool
+	linkFactory   link.Factory
 }
 
 // ForEach satisfies the Lectio bounded content collection interface
@@ -143,20 +137,13 @@ func (c *Collection) initOptions(ctx context.Context, apiEndpoint string, option
 		if v, ok := option.(tidyHandler); ok {
 			c.tidyHandler = v
 		}
-		if v, ok := option.(linkTraverser); ok {
-			c.linkTraverser = v
-			c.traverseLinks = true
-		}
-		if v, ok := option.(func(ctx context.Context, originalURL string, options ...interface{}) (link.Link, error)); ok {
-			c.traverseLinkFunc = v
+		if instance, ok := option.(link.Factory); ok {
+			c.linkFactory = instance
 			c.traverseLinks = true
 		}
 		if v, ok := option.(isAsynchRequested); ok {
 			c.asynch = v.IsAsynchRequested(ctx)
 		}
-		// if v, ok := option.(*struct{ ID string }); ok {
-		// 	c.tidyInstance = v.ID
-		// }
 	}
 
 	if c.client == nil {
@@ -177,42 +164,17 @@ func (c *Collection) prepareHTTPRequest(ctx context.Context, req *http.Request) 
 }
 
 func (c *Collection) finalize(ctx context.Context) {
-	warnItem := func(item *Item, code, message string) {
-		if c.warningTracker != nil {
-			c.warningTracker.OnWarning(ctx, code, fmt.Sprintf("%s (item %d)", message, item.Index))
-		}
-	}
-
-	var linkTraversable func(item *Item) bool
-	var traverseLink func(item *Item) (link.Link, error)
-	if c.linkTraverser != nil {
-		linkTraversable = func(item *Item) bool {
-			suggested := !item.isTraversable(func(code, message string) {
-				warnItem(item, code, message)
-			})
-			return c.linkTraverser.IsURLTraversable(ctx, item.OriginalURL(), suggested,
-				func(code, message string) {
-					warnItem(item, code, message)
-				})
-		}
-		traverseLink = func(item *Item) (link.Link, error) {
-			return c.linkTraverser.TraverseLink(ctx, item.OriginalURL())
-		}
-	} else if c.traverseLinkFunc != nil {
-		linkTraversable = func(item *Item) bool {
-			return item.isTraversable(func(code, message string) {
-				warnItem(item, code, message)
-			})
-		}
-		traverseLink = func(item *Item) (link.Link, error) {
-			return c.traverseLinkFunc(ctx, item.OriginalURL())
-		}
-	}
-
 	finalizeItem := func(ctx context.Context, index uint, item *Item) {
 		item.finalize(ctx, c.tidyHandler, index)
 		if c.traverseLinks {
-			item.traverseLink(ctx, linkTraversable, traverseLink)
+			warnItem := func(code, message string) {
+				if c.warningTracker != nil {
+					c.warningTracker.OnWarning(ctx, code, fmt.Sprintf("%s (item %d)", message, item.Index))
+				}
+			}
+			if item.isTraversable(warnItem) {
+				item.traverseLink(ctx, c.linkFactory)
+			}
 		}
 	}
 
