@@ -57,24 +57,24 @@ type Item struct {
 }
 
 // OriginalURL satisfies the contract for a Lectio link.Link object
-func (i *Item) OriginalURL(ctx context.Context, options ...interface{}) string {
+func (i *Item) OriginalURL() string {
 	return i.Link
 }
 
 // FinalURL satisfies the contract for a Lectio link.Link object
-func (i *Item) FinalURL(ctx context.Context, options ...interface{}) (*url.URL, error) {
+func (i *Item) FinalURL() (*url.URL, error) {
 	if i.linkTraversed && i.linkTraversable {
 		return i.traversedLink.FinalURL()
 	}
-	return url.Parse(i.OriginalURL(ctx, options...))
+	return url.Parse(i.OriginalURL())
 }
 
 // TraversedLink satisfies the contract for a Lectio Content interface
-func (i *Item) TraversedLink(ctx context.Context, options ...interface{}) (bool, bool, link.Link, error) {
+func (i *Item) TraversedLink() (bool, bool, link.Link, error) {
 	return i.linkTraversable, i.linkTraversed, i.traversedLink, i.linkTraversalError
 }
 
-func (i *Item) isTraversable(ctx context.Context, warn func(code, message string)) bool {
+func (i *Item) isTraversable(warn func(code, message string)) bool {
 	if len(i.DeletedAt) > 0 {
 		warn("DMIWARN-001-ITEMDELETED", "Item marked as deleted, not traversable")
 		return false
@@ -107,22 +107,22 @@ func (i *Item) traverseLink(ctx context.Context, traversable func(item *Item) bo
 }
 
 // Title satisfies the contract for a Lectio Content interface
-func (i *Item) Title(ctx context.Context, options ...interface{}) string {
+func (i *Item) Title() string {
 	return i.Name
 }
 
 // Summary satisfies the contract for a Lectio Content interface
-func (i *Item) Summary(ctx context.Context, options ...interface{}) string {
+func (i *Item) Summary() string {
 	return i.Description
 }
 
 // Content satisfies the contract for a Lectio Content interface
-func (i *Item) Content(ctx context.Context, options ...interface{}) string {
+func (i *Item) Content() string {
 	return i.RawContent
 }
 
 // FeaturedImageURL satisfies the contract for a Lectio Content interface
-func (i *Item) FeaturedImageURL(ctx context.Context, options ...interface{}) string {
+func (i *Item) FeaturedImageURL() string {
 	return i.ThumbnailURL
 }
 

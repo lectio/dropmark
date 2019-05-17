@@ -70,7 +70,7 @@ func (suite *DropmarkSuite) TestContent() {
 	genericItem1, genericItem1Err := getItemFn(1, 1)
 	suite.Nil(genericItem1Err, "Unable to get Dropmark content item from %q: %v.", collection.apiEndpoint, genericItem1Err)
 	item1 := genericItem1.(*Item)
-	suite.Equal("https://www2.deloitte.com/insights/us/en/industry/financial-services/demystifying-cybersecurity-insurance.html", item1.OriginalURL(ctx))
+	suite.Equal("https://www2.deloitte.com/insights/us/en/industry/financial-services/demystifying-cybersecurity-insurance.html", item1.OriginalURL())
 
 	// get a range of items -- the item function will return a slice
 	genericItems, genericItemsErr := getItemFn(1, 3)

@@ -187,25 +187,25 @@ func (c *Collection) finalize(ctx context.Context) {
 	var traverseLink func(item *Item) (link.Link, error)
 	if c.linkTraverser != nil {
 		linkTraversable = func(item *Item) bool {
-			suggested := !item.isTraversable(ctx, func(code, message string) {
+			suggested := !item.isTraversable(func(code, message string) {
 				warnItem(item, code, message)
 			})
-			return c.linkTraverser.IsURLTraversable(ctx, item.OriginalURL(ctx), suggested,
+			return c.linkTraverser.IsURLTraversable(ctx, item.OriginalURL(), suggested,
 				func(code, message string) {
 					warnItem(item, code, message)
 				})
 		}
 		traverseLink = func(item *Item) (link.Link, error) {
-			return c.linkTraverser.TraverseLink(ctx, item.OriginalURL(ctx))
+			return c.linkTraverser.TraverseLink(ctx, item.OriginalURL())
 		}
 	} else if c.traverseLinkFunc != nil {
 		linkTraversable = func(item *Item) bool {
-			return item.isTraversable(ctx, func(code, message string) {
+			return item.isTraversable(func(code, message string) {
 				warnItem(item, code, message)
 			})
 		}
 		traverseLink = func(item *Item) (link.Link, error) {
-			return c.traverseLinkFunc(ctx, item.OriginalURL(ctx))
+			return c.traverseLinkFunc(ctx, item.OriginalURL())
 		}
 	}
 
