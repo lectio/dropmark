@@ -32,10 +32,10 @@ type isAsynchRequested interface {
 
 // Collection is the object returned from the Dropmark API calls after JSON unmarshalling is completed
 type Collection struct {
-	Name  string  `json:"name,omitempty"`
-	Items []*Item `json:"items,omitempty"`
+	APIEndpoint string  `json:"apiEndpoint,omitempty"` // injected by Lectio
+	Name        string  `json:"name,omitempty"`        // from Dropmark API
+	Items       []*Item `json:"items,omitempty"`       // from Dropmark API
 
-	apiEndpoint    string
 	client         *http.Client
 	reqPreparer    httpRequestPreparer
 	prepReqFunc    func(ctx context.Context, client *http.Client, req *http.Request)
@@ -47,58 +47,8 @@ type Collection struct {
 	asynch         bool
 }
 
-// ForEach satisfies the Lectio bounded content collection interface
-func (c *Collection) ForEach(ctx context.Context, before func(ctx context.Context, total uint), itemHandler func(ctx context.Context, index uint, item interface{}, total uint) bool, after func(ctx context.Context, handled, total uint), options ...interface{}) {
-	count := uint(len(c.Items))
-	var handled uint
-
-	if before != nil {
-		before(ctx, count)
-	}
-
-	for index, content := range c.Items {
-		ok := itemHandler(ctx, uint(index), content, count)
-		if !ok {
-			break
-		}
-		handled++
-	}
-
-	if after != nil {
-		after(ctx, handled, count)
-	}
-}
-
-// Content satisfies the general Lectio interface for retrieving a single piece of content from a list
-func (c Collection) Content() (count int, itemFn func(startIndex, endIndex int) (interface{}, error), err error) {
-	count = len(c.Items)
-	itemFn = func(startIndex, endIndex int) (interface{}, error) {
-		if startIndex == endIndex {
-			return c.Items[startIndex], nil
-		}
-		list := make([]*Item, endIndex-startIndex+1)
-		listIndex := 0
-		for i := startIndex; i <= endIndex; i++ {
-			list[listIndex] = c.Items[i]
-			listIndex++
-		}
-		return list, nil
-	}
-	return
-}
-
-// ContentSourceName returns name of the Dropmark API source
-func (c Collection) ContentSourceName() string {
-	return "Dropmark"
-}
-
-// ContentAPIEndpoint returns the Dropmark API endpoint which created the collection
-func (c Collection) ContentAPIEndpoint() string {
-	return c.apiEndpoint
-}
-
 func (c *Collection) initOptions(ctx context.Context, apiEndpoint string, options ...interface{}) {
-	c.apiEndpoint = apiEndpoint
+	c.APIEndpoint = apiEndpoint
 	c.rpr = defaultProgressReporter
 	c.bpr = defaultProgressReporter
 
@@ -160,7 +110,7 @@ func (c *Collection) finalize(ctx context.Context) {
 	}
 
 	itemsCount := len(c.Items)
-	c.bpr.StartReportableActivity(ctx, fmt.Sprintf("Importing %d Dropmark Links from %q", itemsCount, c.apiEndpoint), itemsCount)
+	c.bpr.StartReportableActivity(ctx, fmt.Sprintf("Importing %d Dropmark Links from %q", itemsCount, c.APIEndpoint), itemsCount)
 	if c.asynch {
 		var wg sync.WaitGroup
 		queue := make(chan int)
@@ -185,7 +135,7 @@ func (c *Collection) finalize(ctx context.Context) {
 			c.bpr.IncrementReportableActivityProgress(ctx)
 		}
 	}
-	c.bpr.CompleteReportableActivityProgress(ctx, fmt.Sprintf("Imported %d Dropmark Links from %q", itemsCount, c.apiEndpoint))
+	c.bpr.CompleteReportableActivityProgress(ctx, fmt.Sprintf("Imported %d Dropmark Links from %q", itemsCount, c.APIEndpoint))
 }
 
 // ImportCollection takes a Dropmark apiEndpoint and creates a Collection object
