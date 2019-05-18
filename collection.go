@@ -6,16 +6,11 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"sync"
 	"time"
 )
 
 type httpRequestPreparer interface {
 	OnPrepareHTTPRequest(ctx context.Context, client *http.Client, req *http.Request)
-}
-
-type errorTracker interface {
-	OnError(ctx context.Context, code string, err error)
 }
 
 type warningTracker interface {
@@ -24,10 +19,6 @@ type warningTracker interface {
 
 type tidyHandler interface {
 	OnTidy(ctx context.Context, tidy string)
-}
-
-type isAsynchRequested interface {
-	IsAsynchRequested(ctx context.Context) bool
 }
 
 // Collection is the object returned from the Dropmark API calls after JSON unmarshalling is completed
@@ -42,9 +33,7 @@ type Collection struct {
 	rpr            ReaderProgressReporter
 	bpr            BoundedProgressReporter
 	tidyHandler    tidyHandler
-	errorTracker   errorTracker
 	warningTracker warningTracker
-	asynch         bool
 }
 
 func (c *Collection) initOptions(ctx context.Context, apiEndpoint string, options ...interface{}) {
@@ -53,9 +42,6 @@ func (c *Collection) initOptions(ctx context.Context, apiEndpoint string, option
 	c.bpr = defaultProgressReporter
 
 	for _, option := range options {
-		if v, ok := option.(errorTracker); ok {
-			c.errorTracker = v
-		}
 		if v, ok := option.(warningTracker); ok {
 			c.warningTracker = v
 		}
@@ -82,9 +68,6 @@ func (c *Collection) initOptions(ctx context.Context, apiEndpoint string, option
 		if v, ok := option.(tidyHandler); ok {
 			c.tidyHandler = v
 		}
-		if v, ok := option.(isAsynchRequested); ok {
-			c.asynch = v.IsAsynchRequested(ctx)
-		}
 	}
 
 	if c.client == nil {
@@ -105,37 +88,9 @@ func (c *Collection) prepareHTTPRequest(ctx context.Context, req *http.Request) 
 }
 
 func (c *Collection) finalize(ctx context.Context) {
-	finalizeItem := func(ctx context.Context, index uint, item *Item) {
-		item.finalize(ctx, c.tidyHandler, index)
+	for index, item := range c.Items {
+		item.finalize(ctx, c.tidyHandler, uint(index))
 	}
-
-	itemsCount := len(c.Items)
-	c.bpr.StartReportableActivity(ctx, fmt.Sprintf("Importing %d Dropmark Links from %q", itemsCount, c.APIEndpoint), itemsCount)
-	if c.asynch {
-		var wg sync.WaitGroup
-		queue := make(chan int)
-		for index, item := range c.Items {
-			wg.Add(1)
-			go func(index int, item *Item) {
-				defer wg.Done()
-				finalizeItem(ctx, uint(index), item)
-				queue <- index
-			}(index, item)
-		}
-		go func() {
-			defer close(queue)
-			wg.Wait()
-		}()
-		for range queue {
-			c.bpr.IncrementReportableActivityProgress(ctx)
-		}
-	} else {
-		for index, item := range c.Items {
-			finalizeItem(ctx, uint(index), item)
-			c.bpr.IncrementReportableActivityProgress(ctx)
-		}
-	}
-	c.bpr.CompleteReportableActivityProgress(ctx, fmt.Sprintf("Imported %d Dropmark Links from %q", itemsCount, c.APIEndpoint))
 }
 
 // ImportCollection takes a Dropmark apiEndpoint and creates a Collection object
