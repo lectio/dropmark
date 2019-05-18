@@ -3,7 +3,6 @@ package dropmark
 import (
 	"context"
 	"fmt"
-	"github.com/lectio/link"
 	"net/url"
 	"strings"
 )
@@ -25,33 +24,28 @@ type Tag struct {
 
 // Item represents a single Dropmark collection item after JSON unmarshalling is completed
 type Item struct {
-	Index           uint        `json:"index_in_collection"`   // injected by Lectio in finalize()
-	ID              string      `json:"id"`                    // from Dropmark API
-	IsURL           bool        `json:"is_url"`                // from Dropmark API
-	Type            string      `json:"type"`                  // from Dropmark API
-	MIME            string      `json:"mime"`                  // from Dropmark API
-	Link            string      `json:"link,omitempty"`        // from Dropmark API
-	Name            string      `json:"name,omitempty"`        // from Dropmark API
-	Description     string      `json:"description,omitempty"` // from Dropmark API
-	Content         string      `json:"content,omitempty"`     // from Dropmark API
-	Tags            []*Tag      `json:"tags,omitempty"`        // from Dropmark API
-	CreatedAt       string      `json:"created_at,omitempty"`  // from Dropmark API
-	UpdatedAt       string      `json:"updated_at,omitempty"`  // from Dropmark API
-	DeletedAt       string      `json:"deleted_at,omitempty"`  // from Dropmark API
-	ThumbnailURL    string      `json:"thumbnail,omitempty"`   // from Dropmark API
-	Thumbnails      *Thumbnails `json:"thumbnails,omitempty"`  // from Dropmark API
-	UserID          string      `json:"user_id,omitempty"`     // from Dropmark API
-	UserNameShort   string      `json:"username,omitempty"`    // from Dropmark API
-	UserNameLong    string      `json:"user_name,omitempty"`   // from Dropmark API
-	UserEmail       string      `json:"user_email,omitempty"`  // from Dropmark API
-	UserAvatarURL   *Thumbnails `json:"user_avatar,omitempty"` // from Dropmark API
-	DropmarkEditURL string      `json:"url"`                   // from Dropmark API
-
-	edits                  []string
-	linkTraversalAttempted bool
-	linkTraversable        bool
-	traversedLink          link.Link
-	linkTraversalError     error
+	ContentArchetype string      `json:"archetype"`             // injected by Lectio in finalize()
+	Index            uint        `json:"index_in_collection"`   // injected by Lectio in finalize()
+	ID               string      `json:"id"`                    // from Dropmark API
+	IsURL            bool        `json:"is_url"`                // from Dropmark API
+	Type             string      `json:"type"`                  // from Dropmark API
+	MIME             string      `json:"mime"`                  // from Dropmark API
+	Link             string      `json:"link,omitempty"`        // from Dropmark API
+	Name             string      `json:"name,omitempty"`        // from Dropmark API
+	Description      string      `json:"description,omitempty"` // from Dropmark API
+	Content          string      `json:"content,omitempty"`     // from Dropmark API
+	Tags             []*Tag      `json:"tags,omitempty"`        // from Dropmark API
+	CreatedAt        string      `json:"created_at,omitempty"`  // from Dropmark API
+	UpdatedAt        string      `json:"updated_at,omitempty"`  // from Dropmark API
+	DeletedAt        string      `json:"deleted_at,omitempty"`  // from Dropmark API
+	ThumbnailURL     string      `json:"thumbnail,omitempty"`   // from Dropmark API
+	Thumbnails       *Thumbnails `json:"thumbnails,omitempty"`  // from Dropmark API
+	UserID           string      `json:"user_id,omitempty"`     // from Dropmark API
+	UserNameShort    string      `json:"username,omitempty"`    // from Dropmark API
+	UserNameLong     string      `json:"user_name,omitempty"`   // from Dropmark API
+	UserEmail        string      `json:"user_email,omitempty"`  // from Dropmark API
+	UserAvatarURL    *Thumbnails `json:"user_avatar,omitempty"` // from Dropmark API
+	DropmarkEditURL  string      `json:"url"`                   // from Dropmark API
 
 	finalized bool
 }
@@ -63,18 +57,19 @@ func (i *Item) OriginalURL() string {
 
 // FinalURL satisfies the contract for a Lectio link.Link object
 func (i *Item) FinalURL() (*url.URL, error) {
-	if i.linkTraversalAttempted && i.linkTraversable {
-		return i.traversedLink.FinalURL()
+	var warning string
+	warn := func(code, message string) {
+		warning = fmt.Sprintf("[%s] %s", code, message)
 	}
-	return url.Parse(i.OriginalURL())
+
+	if i.Traversable(warn) {
+		return url.Parse(i.OriginalURL())
+	}
+	return nil, fmt.Errorf(warning)
 }
 
-// TraversedLink satisfies the contract for a Lectio Content interface
-func (i *Item) TraversedLink() (bool, bool, link.Link, error) {
-	return i.linkTraversalAttempted, i.linkTraversable, i.traversedLink, i.linkTraversalError
-}
-
-func (i *Item) isTraversable(warn func(code, message string)) bool {
+// Traversable satisfies the contract for a Lectio link.Link object
+func (i *Item) Traversable(warn func(code, message string)) bool {
 	if len(i.DeletedAt) > 0 {
 		warn("DMIWARN-001-ITEMDELETED", "Item marked as deleted, not traversable")
 		return false
@@ -93,49 +88,15 @@ func (i *Item) isTraversable(warn func(code, message string)) bool {
 	return true
 }
 
-func (i *Item) traverseLink(ctx context.Context, linkFactory link.Factory) {
-	if i.linkTraversalAttempted || linkFactory == nil {
-		return
-	}
-
-	i.linkTraversable, i.traversedLink, i.linkTraversalError = linkFactory.TraverseLink(ctx, i.Link)
-	i.linkTraversalAttempted = true
-}
-
-// ContentArchetype satisfies the contract for a Lectio Content interface
-func (i *Item) ContentArchetype() string {
-	return "bookmark"
-}
-
-// Title satisfies the contract for a Lectio Content interface
-func (i *Item) Title() string {
-	return i.Name
-}
-
-// Summary satisfies the contract for a Lectio Content interface
-func (i *Item) Summary() string {
-	return i.Description
-}
-
-// Body satisfies the contract for a Lectio Content interface
-func (i *Item) Body() string {
-	return i.Content
-}
-
-// FeaturedImageURL satisfies the contract for a Lectio Content interface
-func (i *Item) FeaturedImageURL() string {
-	return i.ThumbnailURL
-}
-
 func (i *Item) finalize(ctx context.Context, tidyInstance tidyHandler, index uint) {
 	if i.finalized {
 		return
 	}
 
+	i.ContentArchetype = "bookmark"
 	i.Index = index
 
 	onTidy := func(tidy string) {
-		i.edits = append(i.edits, tidy)
 		if tidyInstance != nil {
 			tidyInstance.OnTidy(ctx, tidy)
 		}

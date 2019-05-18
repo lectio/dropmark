@@ -8,8 +8,6 @@ import (
 	"net/http"
 	"sync"
 	"time"
-
-	"github.com/lectio/link"
 )
 
 type httpRequestPreparer interface {
@@ -46,10 +44,7 @@ type Collection struct {
 	tidyHandler    tidyHandler
 	errorTracker   errorTracker
 	warningTracker warningTracker
-
-	asynch        bool
-	traverseLinks bool
-	linkFactory   link.Factory
+	asynch         bool
 }
 
 // ForEach satisfies the Lectio bounded content collection interface
@@ -137,10 +132,6 @@ func (c *Collection) initOptions(ctx context.Context, apiEndpoint string, option
 		if v, ok := option.(tidyHandler); ok {
 			c.tidyHandler = v
 		}
-		if instance, ok := option.(link.Factory); ok {
-			c.linkFactory = instance
-			c.traverseLinks = true
-		}
 		if v, ok := option.(isAsynchRequested); ok {
 			c.asynch = v.IsAsynchRequested(ctx)
 		}
@@ -166,16 +157,6 @@ func (c *Collection) prepareHTTPRequest(ctx context.Context, req *http.Request) 
 func (c *Collection) finalize(ctx context.Context) {
 	finalizeItem := func(ctx context.Context, index uint, item *Item) {
 		item.finalize(ctx, c.tidyHandler, index)
-		if c.traverseLinks {
-			warnItem := func(code, message string) {
-				if c.warningTracker != nil {
-					c.warningTracker.OnWarning(ctx, code, fmt.Sprintf("%s (item %d)", message, item.Index))
-				}
-			}
-			if item.isTraversable(warnItem) {
-				item.traverseLink(ctx, c.linkFactory)
-			}
-		}
 	}
 
 	itemsCount := len(c.Items)
