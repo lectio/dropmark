@@ -41,10 +41,6 @@ func (suite *DropmarkSuite) CompleteReportableActivityProgress(ctx context.Conte
 
 }
 
-func (suite *DropmarkSuite) IsURLTraversable(ctx context.Context, originalURL string, suggested bool, warn func(code, message string), options ...interface{}) bool {
-	return true
-}
-
 func (suite *DropmarkSuite) TestDropmarkCollection() {
 	spr := &summaryProgressReporter{prefix: "TestDropmarkCollection()"}
 	ctx := context.Background()
