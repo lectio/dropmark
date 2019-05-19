@@ -13,10 +13,6 @@ type httpRequestPreparer interface {
 	OnPrepareHTTPRequest(ctx context.Context, client *http.Client, req *http.Request)
 }
 
-type warningTracker interface {
-	OnWarning(ctx context.Context, code string, message string)
-}
-
 type tidyHandler interface {
 	OnTidy(ctx context.Context, tidy string)
 }
@@ -27,13 +23,12 @@ type Collection struct {
 	Name        string  `json:"name,omitempty"`        // from Dropmark API
 	Items       []*Item `json:"items,omitempty"`       // from Dropmark API
 
-	client         *http.Client
-	reqPreparer    httpRequestPreparer
-	prepReqFunc    func(ctx context.Context, client *http.Client, req *http.Request)
-	rpr            ReaderProgressReporter
-	bpr            BoundedProgressReporter
-	tidyHandler    tidyHandler
-	warningTracker warningTracker
+	client      *http.Client
+	reqPreparer httpRequestPreparer
+	prepReqFunc func(ctx context.Context, client *http.Client, req *http.Request)
+	rpr         ReaderProgressReporter
+	bpr         BoundedProgressReporter
+	tidyHandler tidyHandler
 }
 
 func (c *Collection) initOptions(ctx context.Context, apiEndpoint string, options ...interface{}) {
@@ -42,9 +37,6 @@ func (c *Collection) initOptions(ctx context.Context, apiEndpoint string, option
 	c.bpr = defaultProgressReporter
 
 	for _, option := range options {
-		if v, ok := option.(warningTracker); ok {
-			c.warningTracker = v
-		}
 		if v, ok := option.(interface {
 			HTTPClient(ctx context.Context) *http.Client
 		}); ok {
