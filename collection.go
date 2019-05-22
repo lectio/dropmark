@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/lectio/progress"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -26,15 +27,15 @@ type Collection struct {
 	client      *http.Client
 	reqPreparer httpRequestPreparer
 	prepReqFunc func(ctx context.Context, client *http.Client, req *http.Request)
-	rpr         ReaderProgressReporter
-	bpr         BoundedProgressReporter
+	rpr         progress.ReaderProgressReporter
+	bpr         progress.BoundedProgressReporter
 	tidyHandler tidyHandler
 }
 
 func (c *Collection) initOptions(ctx context.Context, apiEndpoint string, options ...interface{}) {
 	c.APIEndpoint = apiEndpoint
-	c.rpr = defaultProgressReporter
-	c.bpr = defaultProgressReporter
+	c.rpr = progress.SilentReporter{}
+	c.bpr = progress.SilentReporter{}
 
 	for _, option := range options {
 		if v, ok := option.(interface {
@@ -51,10 +52,10 @@ func (c *Collection) initOptions(ctx context.Context, apiEndpoint string, option
 		if v, ok := option.(func(ctx context.Context, client *http.Client, req *http.Request)); ok {
 			c.prepReqFunc = v
 		}
-		if v, ok := option.(ReaderProgressReporter); ok {
+		if v, ok := option.(progress.ReaderProgressReporter); ok {
 			c.rpr = v
 		}
-		if v, ok := option.(BoundedProgressReporter); ok {
+		if v, ok := option.(progress.BoundedProgressReporter); ok {
 			c.bpr = v
 		}
 		if v, ok := option.(tidyHandler); ok {

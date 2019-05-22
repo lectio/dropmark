@@ -3,6 +3,7 @@ package dropmark
 import (
 	"context"
 	"github.com/lectio/link"
+	"github.com/lectio/progress"
 	"io"
 	"net/http"
 	"testing"
@@ -42,7 +43,7 @@ func (suite *DropmarkSuite) CompleteReportableActivityProgress(ctx context.Conte
 }
 
 func (suite *DropmarkSuite) TestDropmarkCollection() {
-	spr := &summaryProgressReporter{prefix: "TestDropmarkCollection()"}
+	spr := progress.NewSummaryReporter("TestDropmarkCollection()")
 	ctx := context.Background()
 	collection, getErr := ImportCollection(ctx, "https://shah.dropmark.com/652682.json", suite, spr, suite.factory)
 	suite.Nil(getErr, "Unable to retrieve Dropmark collection from %q: %v.", collection.APIEndpoint, getErr)
