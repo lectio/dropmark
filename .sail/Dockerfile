@@ -5,4 +5,5 @@ RUN sudo apt-get update && \
 RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash && \
    . ~/.nvm/nvm.sh \
    && nvm install node
+LABEL project_root "~/go/src/github.com/lectio"
 RUN installext peterjausovec.vscode-docker
