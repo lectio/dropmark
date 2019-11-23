@@ -5,7 +5,7 @@ RUN sudo apt-get update && \
    
 LABEL project_root "~/projects/lectio"
 
-RUN installext peterjausovec.vscode-docker
+RUN installext ms-azuretools.vscode-docker
 RUN installext vscode-icons-team.vscode-icons
 RUN installext coenraads.bracket-pair-colorizer
 RUN installext esbenp.prettier-vscode
