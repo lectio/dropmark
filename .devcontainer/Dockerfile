@@ -7,6 +7,8 @@ FROM golang:1.12
 
 # Avoid warnings by switching to noninteractive
 ENV DEBIAN_FRONTEND=noninteractive
+ENV TERM xterm
+ENV ZSH_THEME agnoster
 
 # This Dockerfile adds a non-root 'vscode' user with sudo access. However, for Linux,
 # this user's GID/UID must match your local user UID/GID to avoid permission issues
@@ -21,7 +23,7 @@ RUN apt-get update \
     && apt-get -y install --no-install-recommends apt-utils dialog 2>&1 \
     #
     # Verify git, process tools, lsb-release (common in install instructions for CLIs) installed
-    && apt-get -y install git iproute2 procps lsb-release \
+    && apt-get -y install git iproute2 procps lsb-release zsh \
     #
     # Install gocode-gomod
     && go get -x -d github.com/stamblerre/gocode 2>&1 \
@@ -65,4 +67,7 @@ RUN apt-get update \
     # Clean up
     && apt-get autoremove -y \
     && apt-get clean -y \
-    && rm -rf /var/lib/apt/lists/* /go/src
+    && rm -rf /var/lib/apt/lists/* /go/src \
+    #
+    && wget https://github.com/robbyrussell/oh-my-zsh/raw/master/tools/install.sh -O - | zsh || true
+#    && /bin/zsh -i -c setupsolarized dircolors.256dark
